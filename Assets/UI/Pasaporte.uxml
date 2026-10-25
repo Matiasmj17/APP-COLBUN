@@ -1,0 +1,112 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Pasaporte.uss" />
+
+    <ui:VisualElement name="pantalla-pasaporte" class="pantalla pasaporte">
+
+        <!-- Cabecera fija arriba con Logos e Íconos -->
+        <ui:VisualElement class="cabecera">
+            <ui:VisualElement class="logo-colbun-header" />
+            <ui:VisualElement class="cabecera__derecha">
+                <ui:Button class="btn-icono icono-info" />
+                <ui:Button class="btn-icono icono-perfil" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:ScrollView name="lista" class="lista" mode="Vertical" vertical-scroller-visibility="Hidden" touch-scroll-type="Elastic">
+
+            <!-- Tarjeta: recorrido activo con logo secundario -->
+            <ui:VisualElement class="tarjeta">
+                <ui:VisualElement class="fila fila--entre">
+                    <ui:VisualElement>
+                        <ui:Label text="RECORRIDO ACTIVO" class="texto-chico texto-azul" />
+                        <ui:Label text="Pasaporte Digital" class="titulo-grande" />
+                        <ui:Label text="Sendero Botánico • Colbún" class="texto-gris" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="logo-colbun-secundario" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Tarjeta: progreso con íconos de trofeo y check -->
+            <ui:VisualElement class="tarjeta">
+                <ui:VisualElement class="fila fila--entre">
+                    <ui:VisualElement class="fila">
+                        <ui:VisualElement class="icono-trofeo" />
+                        <ui:Label name="lbl-progreso" text="2 de 5 estaciones" class="texto-fuerte" />
+                    </ui:VisualElement>
+                    <ui:Label text="Nivel: Explorador Maule" class="pildora pildora--verde" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="fila fila--entre margen-arriba">
+                    <ui:Label text="Progreso del Sendero" class="texto-gris" />
+                    <ui:Label name="lbl-porcentaje" text="40% completado" class="texto-azul texto-negrita" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="barra">
+                    <ui:VisualElement name="barra-relleno" class="barra__relleno" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="fila fila--entre margen-arriba">
+                    <ui:VisualElement class="fila">
+                        <ui:VisualElement class="icono-check" />
+                        <ui:Label name="lbl-proxima" text="Próxima: Fauna del Maule" class="texto-gris" />
+                    </ui:VisualElement>
+                    <ui:Label text="+60 pts AR" class="texto-azul texto-negrita" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Título de sección -->
+            <ui:Label text="Estaciones del Sendero" class="subtitulo" />
+
+            <!-- Contenedor vacío para PasaporteController -->
+            <ui:VisualElement name="estaciones" />
+
+            <ui:VisualElement class="tip">
+                <ui:Label text="Tip de Explorador" class="tip__titulo" />
+                <ui:Label text="Escanea los 5 códigos QR físicos distribuidos en las estaciones del sendero para obtener tu insignia digital oficial Colbún." class="tip__texto" />
+            </ui:VisualElement>
+        </ui:ScrollView>
+
+        <!-- Botón flotante -->
+        <ui:VisualElement class="flotante" picking-mode="Ignore">
+            <ui:Button name="btn-escanear" text="Escanear QR" class="boton-escanear" />
+        </ui:VisualElement>
+
+        <!-- Barra de navegación inferior con íconos -->
+        <ui:VisualElement class="barra-nav">
+            <ui:Button class="nav-btn">
+                <ui:VisualElement class="nav-icono icono-hitos" />
+                <ui:Label text="Hitos AR" class="nav-texto" />
+            </ui:Button>
+            <ui:Button class="nav-btn nav-btn--activo">
+                <ui:VisualElement class="nav-icono icono-pasaporte" />
+                <ui:Label text="Pasaporte" class="nav-texto" />
+            </ui:Button>
+            <ui:Button name="btn-nav-camara" class="nav-btn nav-btn-camara">
+                <ui:VisualElement class="nav-icono icono-camara-ar" />
+                <ui:Label text="Cámara AR" class="nav-texto" />
+            </ui:Button>
+            <ui:Button class="nav-btn">
+                <ui:VisualElement class="nav-icono icono-encuesta" />
+                <ui:Label text="Encuesta" class="nav-texto" />
+            </ui:Button>
+            <ui:Button class="nav-btn">
+                <ui:VisualElement class="nav-icono icono-klba" />
+                <ui:Label text="Klba" class="nav-texto" />
+            </ui:Button>
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- ============ PANTALLA 2: VISOR DE CÁMARA (Restaurada) ============ -->
+    <ui:VisualElement name="pantalla-escaner" class="pantalla escaner">
+        <ui:VisualElement class="escaner__cabecera">
+            <ui:Button name="btn-volver" text="Volver" class="escaner__volver" />
+            <ui:Label text="VISOR AR ACTIVO" class="escaner__estado" />
+        </ui:VisualElement>
+        <ui:Label text="Apunta la cámara al marcador QR de la estación" class="escaner__instruccion" />
+        <ui:VisualElement class="escaner__centro" picking-mode="Ignore">
+            <ui:VisualElement class="escaner__marco" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:Label name="lbl-mensaje" class="escaner__mensaje" picking-mode="Ignore" />
+        <ui:Button name="btn-simular" text="Ingresar Código" class="escaner__simular" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,286 @@
+/* Medidas pensadas para referencia 1080x1920 (Panel Settings: Scale With Screen Size) */
+
+/* ---------- Base ---------- */
+.pantalla {
+    position: absolute;           /* ocupa toda la pantalla, una encima de otra */
+    left: 0; right: 0; top: 0; bottom: 0;
+}
+.pasaporte { background-color: #F6F8FB; }   /* fondo claro opaco */
+.escaner   { background-color: rgba(0,0,0,0); } /* transparente: se ve la cámara */
+
+.fila { flex-direction: row; align-items: center; }
+.fila--entre { justify-content: space-between; }
+.margen-arriba { margin-top: 24px; }
+
+.texto-chico  { font-size: 28px; -unity-font-style: bold; }
+.texto-azul   { color: #0A5CAD; }
+.texto-gris   { color: #64748B; font-size: 32px; white-space: normal; }
+.texto-fuerte { color: #0F172A; font-size: 38px; -unity-font-style: bold; }
+.texto-negrita{ -unity-font-style: bold; font-size: 32px; }
+.titulo-grande{ color: #0F172A; font-size: 60px; -unity-font-style: bold; margin-top: 4px; }
+.subtitulo    { color: #0F172A; font-size: 48px; -unity-font-style: bold; margin: 20px 50px 24px 50px; }
+
+/* ---------- Cabecera ---------- */
+.cabecera {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 170px;
+    padding: 70px 50px 0 50px;           /* margen superior para la muesca del celular */
+    flex-direction: row; justify-content: space-between; align-items: center;
+    background-color: #FFFFFF;
+}
+.cabecera__marca  { color: #0F172A; font-size: 44px; -unity-font-style: bold; }
+.cabecera__perfil { color: #FFFFFF; background-color: #0B2540; font-size: 26px;
+                    padding: 14px 24px; border-radius: 40px; }
+
+/* ---------- Lista deslizable ---------- */
+.lista { position: absolute; top: 170px; bottom: 190px; left: 0; right: 0; }
+
+/* ---------- Tarjetas generales ---------- */
+.tarjeta {
+    background-color: #FFFFFF;
+    border-radius: 40px;
+    margin: 20px 50px 10px 50px;
+    padding: 40px;
+}
+
+.pildora {
+    font-size: 26px; -unity-font-style: bold;
+    padding: 10px 24px; border-radius: 30px;
+}
+.pildora--verde { background-color: #C7F5D6; color: #166534; }
+
+/* ---------- Barra de progreso ---------- */
+.barra {
+    height: 24px; margin-top: 24px;
+    background-color: #E2E8F0; border-radius: 12px;
+}
+.barra__relleno {
+    height: 100%; width: 40%;           /* el ancho real lo pone el C# */
+    background-color: #0A5CAD; border-radius: 12px;
+}
+
+/* ---------- Tarjetas de estación (las crea el C#) ---------- */
+.estacion {
+    background-color: #FFFFFF;
+    border-radius: 40px;
+    margin: 12px 50px;
+    padding: 36px;
+}
+.estacion__fila { flex-direction: row; align-items: center; }
+.estacion__circulo {
+    width: 140px; height: 140px; border-radius: 70px;
+    background-color: #E5EDE7; color: #16A34A;
+    font-size: 56px; -unity-font-style: bold; -unity-text-align: middle-center;
+    justify-content: center; align-items: center;
+}
+.estacion__textos { flex-grow: 1; flex-shrink: 1; margin-left: 32px; }
+.estacion__etiqueta    { color: #0A5CAD; font-size: 28px; -unity-font-style: bold; }
+.estacion__titulo      { color: #0F172A; font-size: 48px; -unity-font-style: bold; }
+.estacion__descripcion { color: #64748B; font-size: 30px; white-space: normal; }
+.estacion__pildora {
+    font-size: 26px; -unity-font-style: bold;
+    padding: 10px 24px; border-radius: 30px;
+    background-color: #C7F5D6; color: #166534;
+}
+.estacion__pista {
+    margin-top: 28px; padding: 24px 28px; border-radius: 24px;
+    background-color: #FFFFFF; color: #64748B; font-size: 30px; white-space: normal;
+}
+
+/* Estado: pendiente */
+.estacion--pendiente { background-color: #EEF1F6; }
+.estacion--pendiente .estacion__circulo { background-color: #E2E8F0; color: #475569; }
+.estacion--pendiente .estacion__pildora { background-color: #DBEAFE; color: #1D4ED8; }
+
+/* Estado: bloqueada */
+.estacion--bloqueada { background-color: #F1F3F6; }
+.estacion--bloqueada .estacion__circulo { background-color: #E2E8F0; color: #94A3B8; }
+.estacion--bloqueada .estacion__etiqueta,
+.estacion--bloqueada .estacion__titulo,
+.estacion--bloqueada .estacion__descripcion { color: #9AA3AF; }
+.estacion--bloqueada .estacion__pildora { background-color: #E2E8F0; color: #94A3B8; }
+
+/* ---------- Tip oscuro ---------- */
+.tip {
+    background-color: #0B2540; border-radius: 40px;
+    margin: 20px 50px 260px 50px;       /* margen inferior grande: que el botón flotante no tape nada */
+    padding: 40px;
+}
+.tip__titulo { color: #FFFFFF; font-size: 38px; -unity-font-style: bold; }
+.tip__texto  { color: #CBD5E1; font-size: 32px; white-space: normal; margin-top: 10px; }
+
+/* ---------- Botón flotante "Escanear QR" ---------- */
+.flotante {
+    position: absolute; left: 0; right: 0; bottom: 230px;
+    align-items: center;
+}
+
+.boton-escanear {
+    width: 560px; height: 130px; border-radius: 65px;
+    background-color: #0A5CAD; color: #FFFFFF;
+    font-size: 44px; -unity-font-style: bold;
+    border-width: 0; margin: 0;
+    flex-direction: row;        /* Coloca el ícono y el texto en fila */
+    justify-content: center;    /* Los centra horizontalmente */
+    align-items: center;        /* Los centra verticalmente */
+}
+
+.icono-qr-boton {
+    width: 60px; height: 60px; margin-right: 20px;
+    background-image: url('ICONOS/icon.svg'); /* Cambia a .svg si tu archivo lo es */
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+}
+
+/* ---------- Barra inferior ---------- */
+.barra-nav {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 190px;
+    flex-direction: row; background-color: #FFFFFF;
+    border-top-width: 2px; border-top-color: #E5E7EB;
+    padding-bottom: 30px;
+}
+.nav-btn {
+    flex-grow: 1; flex-basis: 0;
+    background-color: rgba(0,0,0,0); border-width: 0; margin: 0;
+    color: #475569; font-size: 28px;
+}
+.nav-btn--activo { color: #0A5CAD; -unity-font-style: bold; }
+
+/* ---------- Visor de cámara ---------- */
+.escaner__cabecera {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 80px 50px 0 50px;
+    flex-direction: row; justify-content: space-between; align-items: center;
+}
+.escaner__volver {
+    background-color: rgba(11,37,64,0.85); color: #FFFFFF;
+    font-size: 32px; border-width: 0; border-radius: 40px; padding: 18px 36px; margin: 0;
+}
+.escaner__estado {
+    background-color: rgba(11,37,64,0.85); color: #60A5FA;
+    font-size: 28px; -unity-font-style: bold; padding: 14px 28px; border-radius: 30px;
+}
+.escaner__instruccion {
+    position: absolute; top: 240px; left: 50px; right: 50px;
+    background-color: rgba(11,37,64,0.85); color: #FFFFFF;
+    font-size: 34px; padding: 30px; border-radius: 30px; white-space: normal;
+}
+.escaner__centro {
+    position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+    justify-content: center; align-items: center;
+}
+.escaner__marco {
+    width: 720px; height: 720px;
+    border-width: 6px; border-color: #3B82F6; border-radius: 30px;
+}
+
+/* ---------- Aviso de QR y botón de prueba ---------- */
+.escaner__mensaje {
+    display: none;                                   /* oculto hasta que el C# lo muestre */
+    position: absolute; left: 50px; right: 50px; bottom: 380px;
+    background-color: rgba(22,163,74,0.95); color: #FFFFFF;   /* verde = éxito */
+    font-size: 38px; -unity-font-style: bold; -unity-text-align: middle-center;
+    padding: 36px; border-radius: 30px; white-space: normal;
+}
+.escaner__mensaje--error { background-color: rgba(220,38,38,0.95); }  /* rojo = QR inválido/ya hecho/bloqueado */
+
+.escaner__simular {
+    position: absolute; left: 50px; right: 50px; bottom: 140px; height: 130px;
+    background-color: #E2E8F0; color: #0F172A;
+    font-size: 40px; -unity-font-style: bold;
+    border-width: 0; border-radius: 30px; margin: 0;
+}
+
+/* ---------- Logos de Colbún ---------- */
+.logo-colbun-header {
+    width: 250px; /* Más angosto para eliminar el espacio invisible */
+    height: 100px;
+    background-image: url('ICONOS/logo_colbun.jpg');
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+    margin-left: -20px; /* Lo empuja forzosamente contra el borde izquierdo */
+}
+
+.logo-colbun-secundario {
+    width: 180px;  
+    height: 100px;
+    background-image: url('ICONOS/logo_colbun.jpg');
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+}
+
+/* ---------- Íconos Asignados desde el Proyecto ---------- */
+.icono-trofeo {
+    width: 50px; height: 50px; margin-right: 15px;
+    background-image: url('ICONOS/TROFEO.svg');
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0; /* Prohíbe que Unity lo aplaste */
+}
+
+.icono-check {
+    width: 50px; height: 50px;
+    background-image: url('ICONOS/ESTACION_PASADA.svg');
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+}
+
+.icono-ampolleta {
+    width: 50px; height: 50px;
+    background-image: url('ICONOS/AMPOLLETA.svg');
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+}
+
+.icono-candado {
+    width: 60px; height: 60px;
+    background-image: url('ICONOS/CANDADO.svg');
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+}
+
+/* ---------- Barra de Navegación Inferior ---------- */
+
+.icono-hitos { background-image: url('ICONOS/UBICACION.svg'); }
+.icono-pasaporte { background-image: url('ICONOS/PASAPORTE.svg'); }
+.icono-camara-ar { background-image: url('ICONOS/AR.svg'); }
+.icono-encuesta { background-image: url('ICONOS/ENCUESTA.svg'); }
+.icono-klba { background-image: url('ICONOS/KIBA ICON.svg'); }
+
+.nav-btn {
+    align-items: center; 
+    justify-content: center;
+    background-color: transparent;
+    border-width: 0;
+}
+
+.nav-icono {
+    width: 35px; height: 35px;
+    min-width: 35px; min-height: 35px; 
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+    align-self: center; 
+    margin-bottom: 5px;
+}
+
+.nav-btn-camara .nav-icono {
+    width: 65px; height: 65px;
+    min-width: 65px; min-height: 65px; 
+    margin-top: -15px; 
+}
+
+/* ---------- Forzar tamaño de íconos rebeldes ---------- */
+
+.icono-ampolleta {
+    width: 50px; height: 50px;
+    min-width: 50px; min-height: 50px; /* Evita que el contenedor azul la aplaste */
+    background-image: url('ICONOS/AMPOLLETA.svg');
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
+}
+
+/* Al juntar las dos clases, esta regla le gana a la restricción de 35px */
+.nav-icono.icono-camara-ar {
+    width: 65px; height: 65px;
+    min-width: 65px; min-height: 65px;
+    margin-top: -15px; 
+}

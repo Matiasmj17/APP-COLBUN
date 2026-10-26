@@ -70,33 +70,6 @@
         <ui:VisualElement class="flotante" picking-mode="Ignore">
             <ui:Button name="btn-escanear" text="Escanear QR" class="boton-escanear" />
         </ui:VisualElement>
-
-            <ui:VisualElement name="pantalla-encuesta" class="pantalla pasaporte" style="display: none;">
-        <ui:Label text="Encuesta" class="titulo-grande" style="margin: 80px 50px;" />
-    </ui:VisualElement>
-    <ui:VisualElement name="pantalla-kiba" class="pantalla pasaporte" style="display: none;">
-        <ui:Label text="Kiba" class="titulo-grande" style="margin: 80px 50px;" />
-    </ui:VisualElement>
-
-        <!-- Barra de navegación inferior con íconos -->
-        <ui:VisualElement name="barra-nav" class="barra-nav">
-            <ui:Button name="btn-nav-pasaporte" class="nav-btn nav-btn--activo">
-                <ui:VisualElement class="nav-icono icono-pasaporte" />
-                <ui:Label text="Pasaporte" class="nav-texto" />
-            </ui:Button>
-            <ui:Button name="btn-nav-camara" class="nav-btn nav-btn-camara">
-                <ui:VisualElement class="nav-icono icono-camara-ar" />
-                <ui:Label text="Cámara AR" class="nav-texto" />
-            </ui:Button>
-            <ui:Button name="btn-nav-kiba" class="nav-btn">
-                <ui:VisualElement class="nav-icono icono-klba" />
-                <ui:Label text="Kiba" class="nav-texto" />
-            </ui:Button>
-            <ui:Button name="btn-nav-encuesta" class="nav-btn">
-                <ui:VisualElement class="nav-icono icono-encuesta" />
-                <ui:Label text="Encuesta" class="nav-texto" />
-            </ui:Button>
-</ui:VisualElement>
     </ui:VisualElement>
 
     <!-- ============ PANTALLA 2: VISOR DE CÁMARA (Restaurada) ============ -->
@@ -111,5 +84,33 @@
         </ui:VisualElement>
         <ui:Label name="lbl-mensaje" class="escaner__mensaje" picking-mode="Ignore" />
         <ui:Button name="btn-simular" text="Ingresar Código" class="escaner__simular" />
+    </ui:VisualElement>
+
+    <!-- ============ PANTALLAS NUEVAS (provisorias) ============ -->
+    <ui:VisualElement name="pantalla-encuesta" class="pantalla pasaporte" style="display: none;">
+        <ui:Label text="Encuesta" class="titulo-grande" style="margin: 80px 50px;" />
+    </ui:VisualElement>
+    <ui:VisualElement name="pantalla-kiba" class="pantalla pasaporte" style="display: none;">
+        <ui:Label text="Kiba" class="titulo-grande" style="margin: 80px 50px;" />
+    </ui:VisualElement>
+
+    <!-- ============ BARRA DE NAVEGACIÓN (al final: se dibuja encima de todo) ============ -->
+    <ui:VisualElement name="barra-nav" class="barra-nav">
+        <ui:Button name="btn-nav-pasaporte" class="nav-btn nav-btn--activo">
+            <ui:VisualElement class="nav-icono icono-pasaporte" />
+            <ui:Label text="Pasaporte" class="nav-texto" />
+        </ui:Button>
+        <ui:Button name="btn-nav-camara" class="nav-btn nav-btn-camara">
+            <ui:VisualElement class="nav-icono icono-camara-ar" />
+            <ui:Label text="Cámara AR" class="nav-texto" />
+        </ui:Button>
+        <ui:Button name="btn-nav-kiba" class="nav-btn">
+            <ui:VisualElement class="nav-icono icono-klba" />
+            <ui:Label text="Kiba" class="nav-texto" />
+        </ui:Button>
+        <ui:Button name="btn-nav-encuesta" class="nav-btn">
+            <ui:VisualElement class="nav-icono icono-encuesta" />
+            <ui:Label text="Encuesta" class="nav-texto" />
+        </ui:Button>
     </ui:VisualElement>
 </ui:UXML>

@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="Pasaporte.uss" />
+    <Style src="Encuesta.uss" />
 
     <ui:VisualElement name="pantalla-pasaporte" class="pantalla pasaporte">
 
@@ -87,10 +88,34 @@
     </ui:VisualElement>
 
     <!-- ============ PANTALLAS NUEVAS (provisorias) ============ -->
-    <ui:VisualElement name="pantalla-encuesta" class="pantalla pasaporte" style="display: none;">
-        <ui:Label text="Encuesta" class="titulo-grande" style="margin: 80px 50px;" />
+        <ui:VisualElement name="pantalla-encuesta" class="pantalla pasaporte" style="display: none;">
+        <ui:ScrollView class="encuesta-scroll" mode="Vertical" vertical-scroller-visibility="Hidden">
+            <ui:Label text="Encuesta del visitante" class="titulo-grande encuesta-margen" />
+            <ui:Label text="Es anónima y toma menos de un minuto." class="texto-gris encuesta-margen" />
+
+            <ui:VisualElement class="tarjeta">
+                <ui:Label text="¿De dónde nos visitas?" class="texto-fuerte" />
+                <ui:VisualElement name="ch-origen" class="chips" />
+            </ui:VisualElement>
+            <ui:VisualElement class="tarjeta">
+                <ui:Label text="Tu rango de edad" class="texto-fuerte" />
+                <ui:VisualElement name="ch-edad" class="chips" />
+            </ui:VisualElement>
+            <ui:VisualElement class="tarjeta">
+                <ui:Label text="¿Cómo fue tu experiencia? (1 a 5)" class="texto-fuerte" />
+                <ui:VisualElement name="ch-nota" class="chips" />
+            </ui:VisualElement>
+            <ui:VisualElement class="tarjeta">
+                <ui:Label text="Comentarios (opcional)" class="texto-fuerte" />
+                <ui:TextField name="tf-comentario" multiline="true" max-length="300" class="encuesta-texto" />
+            </ui:VisualElement>
+
+            <ui:Label name="lbl-encuesta-mensaje" class="texto-gris encuesta-margen" />
+            <ui:Button name="btn-enviar-encuesta" text="Enviar encuesta" class="boton-escanear encuesta-enviar" />
+        </ui:ScrollView>
     </ui:VisualElement>
-    <ui:VisualElement name="pantalla-kiba" class="pantalla pasaporte" style="display: none;">
+
+        <ui:VisualElement name="pantalla-kiba" class="pantalla pasaporte" style="display: none;">
         <ui:Label text="Kiba" class="titulo-grande" style="margin: 80px 50px;" />
     </ui:VisualElement>
 

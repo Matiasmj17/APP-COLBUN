@@ -71,13 +71,16 @@
             <ui:Button name="btn-escanear" text="Escanear QR" class="boton-escanear" />
         </ui:VisualElement>
 
+            <ui:VisualElement name="pantalla-encuesta" class="pantalla pasaporte" style="display: none;">
+        <ui:Label text="Encuesta" class="titulo-grande" style="margin: 80px 50px;" />
+    </ui:VisualElement>
+    <ui:VisualElement name="pantalla-kiba" class="pantalla pasaporte" style="display: none;">
+        <ui:Label text="Kiba" class="titulo-grande" style="margin: 80px 50px;" />
+    </ui:VisualElement>
+
         <!-- Barra de navegación inferior con íconos -->
-        <ui:VisualElement class="barra-nav">
-            <ui:Button class="nav-btn">
-                <ui:VisualElement class="nav-icono icono-hitos" />
-                <ui:Label text="Hitos AR" class="nav-texto" />
-            </ui:Button>
-            <ui:Button class="nav-btn nav-btn--activo">
+        <ui:VisualElement name="barra-nav" class="barra-nav">
+            <ui:Button name="btn-nav-pasaporte" class="nav-btn nav-btn--activo">
                 <ui:VisualElement class="nav-icono icono-pasaporte" />
                 <ui:Label text="Pasaporte" class="nav-texto" />
             </ui:Button>
@@ -85,15 +88,15 @@
                 <ui:VisualElement class="nav-icono icono-camara-ar" />
                 <ui:Label text="Cámara AR" class="nav-texto" />
             </ui:Button>
-            <ui:Button class="nav-btn">
+            <ui:Button name="btn-nav-kiba" class="nav-btn">
+                <ui:VisualElement class="nav-icono icono-klba" />
+                <ui:Label text="Kiba" class="nav-texto" />
+            </ui:Button>
+            <ui:Button name="btn-nav-encuesta" class="nav-btn">
                 <ui:VisualElement class="nav-icono icono-encuesta" />
                 <ui:Label text="Encuesta" class="nav-texto" />
             </ui:Button>
-            <ui:Button class="nav-btn">
-                <ui:VisualElement class="nav-icono icono-klba" />
-                <ui:Label text="Klba" class="nav-texto" />
-            </ui:Button>
-        </ui:VisualElement>
+</ui:VisualElement>
     </ui:VisualElement>
 
     <!-- ============ PANTALLA 2: VISOR DE CÁMARA (Restaurada) ============ -->

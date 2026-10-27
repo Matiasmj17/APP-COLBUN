@@ -14,21 +14,19 @@ public class LectorQR : MonoBehaviour
 
     void Update()
     {
-        // Si Vuforia detecta un código y aún no hemos sacado el modelo...
-        if (!yaLeido && barcode != null && barcode.InstanceData != null)
+        if (barcode == null) return;
+
+        // Cuando el QR sale de la cámara, se permite leer otro (o el mismo de nuevo)
+        if (barcode.InstanceData == null) { yaLeido = false; return; }
+
+        if (yaLeido) return;
+
+        string textoEscaneado = barcode.InstanceData.Text;
+        if (!string.IsNullOrEmpty(textoEscaneado))
         {
-            string textoEscaneado = barcode.InstanceData.Text;
-            
-            if (!string.IsNullOrEmpty(textoEscaneado))
-            {
-                Debug.Log("¡QR detectado por Vuforia!: " + textoEscaneado);
-                
-                // Le enviamos el texto a tu script de SQLite
-                gestorBD.ProcesarEscaneoQR(textoEscaneado);
-                
-                // Bloqueamos la lectura para que no instancie 100 cubos infinitos
-                yaLeido = true; 
-            }
+            Debug.Log("¡QR detectado por Vuforia!: " + textoEscaneado);
+            gestorBD.ProcesarEscaneoQR(textoEscaneado);
+            yaLeido = true;   // evita que cree el modelo mil veces mientras el QR sigue a la vista
         }
     }
 }

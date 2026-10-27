@@ -1,47 +1,28 @@
 using UnityEngine;
 using System.Data;
 using Mono.Data.Sqlite;
-using System.IO;
-using UnityEngine.UIElements;
 
 public class GestionSQLite : MonoBehaviour
 {
     private string rutaDB;
 
-    [Header("Conexión UI Toolkit")]
-    public UIDocument uiDocument;
-    private Label txtTitulo;
-    private Label txtDescripcion;
-    
-    // Contenedores de las pantallas
-    private VisualElement pantallaEscaner;
-    private VisualElement pantallaDetalle;
+    [Header("Ficha de la estación (arrastra aquí el objeto Interfaz)")]
+    public DetalleEstacionController detalle;
+
+    [Header("Cómo aparece el modelo 3D frente a la cámara")]
+    public float distanciaModelo = 1.5f;   // metros hacia adelante
+    public float alturaModelo    = 0.5f;   // metros hacia arriba (para que quede sobre la ficha)
+    public float escalaModelo    = 0.2f;
 
     void Start()
     {
         rutaDB = "URI=file:" + Application.persistentDataPath + "/registro_interacciones.db";
-        
-        if (uiDocument != null)
-        {
-            var root = uiDocument.rootVisualElement;
-            txtTitulo = root.Q<Label>("TXT_Titulo"); 
-            txtDescripcion = root.Q<Label>("TXT_Descripcion");
-
-            // Buscamos las pantallas por su nombre (Asegúrate de que se llamen así en UI Builder)
-            pantallaEscaner = root.Q<VisualElement>("pantalla-escaner"); 
-            pantallaDetalle = root.Q<VisualElement>("pantalla-detalle"); 
-
-            // Aseguramos que al inicio la pantalla de detalle esté oculta
-            if (pantallaDetalle != null) pantallaDetalle.style.display = DisplayStyle.None;
-        }
-
         CrearTablasIniciales();
         InsertarEstacionesDePrueba();
     }
 
     private void CrearTablasIniciales()
     {
-        // (Mantén tu código actual de CrearTablasIniciales aquí, no cambia)
         using (IDbConnection dbConnection = new SqliteConnection(rutaDB))
         {
             dbConnection.Open();
@@ -85,12 +66,13 @@ public class GestionSQLite : MonoBehaviour
 
     private void InsertarEstacionesDePrueba()
     {
-        // (Mantén tu código actual de InsertarEstacionesDePrueba aquí, no cambia)
         using (IDbConnection dbConnection = new SqliteConnection(rutaDB))
         {
             dbConnection.Open();
             using (IDbCommand dbCmd = dbConnection.CreateCommand())
             {
+                // INSERT OR REPLACE: cada vez que se abre la app se actualiza la estación 1,
+                // así que cambiar un texto, el audio o el modelo aquí se aplica sin borrar la base de datos.
                 dbCmd.CommandText = @"INSERT OR REPLACE INTO ESTACION 
                                       (id_estacion, nombre_estacion, codigo_qr, descripcion, ficha_informativa, recursos_multimedia, nombre_modelo, prefab, formato) 
                                       VALUES (1, 
@@ -98,7 +80,7 @@ public class GestionSQLite : MonoBehaviour
                                       'QR_AGUA_01', 
                                       'El origen de la vida (H2O). Molécula formada por dos átomos de hidrógeno y uno de oxígeno.', 
                                       'El agua modela la Tierra y provee energía. En su ciclo de permanente transformación, posee tres estados: sólido, líquido y gaseoso. Los ríos fluyen continuamente desde la alta montaña hasta desembocar en el mar, lagos u otros ríos.', 
-                                      'Audios/Estacion1_Agua', 
+                                      'Modelos3D/Audios/Estacion1_Agua', 
                                       'CuboPrueba1', 
                                       'Modelos3D/Estacion1/CuboPrueba1', 
                                       '.prefab')";
@@ -110,39 +92,57 @@ public class GestionSQLite : MonoBehaviour
 
     public void ProcesarEscaneoQR(string textoEscaneadoPorVuforia)
     {
+        // Validación: se descartan textos vacíos o demasiado largos
+        if (string.IsNullOrWhiteSpace(textoEscaneadoPorVuforia) || textoEscaneadoPorVuforia.Length > 100)
+        {
+            Debug.LogWarning("QR inválido.");
+            return;
+        }
+
         using (IDbConnection dbConnection = new SqliteConnection(rutaDB))
         {
             dbConnection.Open();
             using (IDbCommand dbCmd = dbConnection.CreateCommand())
             {
-                dbCmd.CommandText = $"SELECT prefab, nombre_estacion, ficha_informativa FROM ESTACION WHERE codigo_qr = '{textoEscaneadoPorVuforia}'";
-                
+                // Consulta con parámetro (@codigo): el texto del QR nunca se pega dentro del SQL
+                dbCmd.CommandText = "SELECT prefab, nombre_estacion, descripcion, ficha_informativa, recursos_multimedia " +
+                                    "FROM ESTACION WHERE codigo_qr = @codigo";
+                var parametro = dbCmd.CreateParameter();
+                parametro.ParameterName = "@codigo";
+                parametro.Value = textoEscaneadoPorVuforia;
+                dbCmd.Parameters.Add(parametro);
+
                 using (IDataReader reader = dbCmd.ExecuteReader())
                 {
-                    if (reader.Read()) 
+                    if (reader.Read())
                     {
-                        string rutaPrefab = reader.GetString(0);
-                        string nombreEstacion = reader.GetString(1);
-                        string fichaInformativa = reader.GetString(2);
+                        string rutaPrefab  = reader.GetString(0);
+                        string nombre      = reader.GetString(1);
+                        string descripcion = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                        string ficha       = reader.IsDBNull(3) ? "" : reader.GetString(3);
+                        string rutaAudio   = reader.IsDBNull(4) ? "" : reader.GetString(4);
 
-                        // Inyectamos textos
-                        if (txtTitulo != null) txtTitulo.text = nombreEstacion;
-                        if (txtDescripcion != null) txtDescripcion.text = fichaInformativa;
-                        
-                        // --- LÓGICA DE TRANSICIÓN DE PANTALLA ---
-                        if (pantallaEscaner != null) pantallaEscaner.style.display = DisplayStyle.None; // Oculta el UI del escáner
-                        if (pantallaDetalle != null) pantallaDetalle.style.display = DisplayStyle.Flex; // Muestra la tarjeta del hito
+                        Debug.Log("¡QR Válido! Mostrando ficha e instanciando modelo.");
 
-                        Debug.Log("¡QR Válido! Pantalla cambiada e instanciando modelo.");
-                        
+                        // Modelo 3D frente a la cámara
+                        GameObject modelo = null;
                         GameObject modeloCargado = Resources.Load<GameObject>(rutaPrefab);
                         if (modeloCargado != null)
                         {
-                            GameObject modelo = Instantiate(modeloCargado);
-                            modelo.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-                            modelo.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 1.5f + Vector3.up * 0.2f;
-                            modelo.transform.LookAt(Camera.main.transform);
+                            Transform cam = Camera.main.transform;
+                            modelo = Instantiate(modeloCargado);
+                            modelo.transform.localScale = Vector3.one * escalaModelo;
+                            modelo.transform.position = cam.position + cam.forward * distanciaModelo + Vector3.up * alturaModelo;
+                            modelo.transform.LookAt(cam);
                         }
+                        else
+                        {
+                            Debug.LogWarning("No se encontró el prefab en Resources: " + rutaPrefab);
+                        }
+
+                        // Ficha: textos, audio y cambio de pantalla
+                        if (detalle != null) detalle.Mostrar(nombre, descripcion, ficha, rutaAudio, modelo);
+                        else Debug.LogWarning("Falta arrastrar el objeto Interfaz en el campo 'Detalle' de GestionSQLite.");
                     }
                 }
             }

@@ -2,20 +2,46 @@ using UnityEngine;
 using System.Data;
 using Mono.Data.Sqlite;
 using System.IO;
+using UnityEngine.UIElements;
 
 public class GestionSQLite : MonoBehaviour
 {
     private string rutaDB;
 
+    [Header("Conexión UI Toolkit")]
+    public UIDocument uiDocument;
+    private Label txtTitulo;
+    private Label txtDescripcion;
+    
+    // Contenedores de las pantallas
+    private VisualElement pantallaEscaner;
+    private VisualElement pantallaDetalle;
+
     void Start()
     {
         rutaDB = "URI=file:" + Application.persistentDataPath + "/registro_interacciones.db";
+        
+        if (uiDocument != null)
+        {
+            var root = uiDocument.rootVisualElement;
+            txtTitulo = root.Q<Label>("TXT_Titulo"); 
+            txtDescripcion = root.Q<Label>("TXT_Descripcion");
+
+            // Buscamos las pantallas por su nombre (Asegúrate de que se llamen así en UI Builder)
+            pantallaEscaner = root.Q<VisualElement>("pantalla-escaner"); 
+            pantallaDetalle = root.Q<VisualElement>("pantalla-detalle"); 
+
+            // Aseguramos que al inicio la pantalla de detalle esté oculta
+            if (pantallaDetalle != null) pantallaDetalle.style.display = DisplayStyle.None;
+        }
+
         CrearTablasIniciales();
-        InsertarEstacionesDePrueba(); // Llenamos el catálogo estático
+        InsertarEstacionesDePrueba();
     }
 
     private void CrearTablasIniciales()
     {
+        // (Mantén tu código actual de CrearTablasIniciales aquí, no cambia)
         using (IDbConnection dbConnection = new SqliteConnection(rutaDB))
         {
             dbConnection.Open();
@@ -57,31 +83,31 @@ public class GestionSQLite : MonoBehaviour
         }
     }
 
-    // 1. Llenamos la tabla ESTACION con datos para que haya algo que buscar
     private void InsertarEstacionesDePrueba()
     {
+        // (Mantén tu código actual de InsertarEstacionesDePrueba aquí, no cambia)
         using (IDbConnection dbConnection = new SqliteConnection(rutaDB))
         {
             dbConnection.Open();
             using (IDbCommand dbCmd = dbConnection.CreateCommand())
             {
-                dbCmd.CommandText = "SELECT COUNT(*) FROM ESTACION";
-                int count = System.Convert.ToInt32(dbCmd.ExecuteScalar());
-
-                if (count == 0)
-                {
-                    // Inserción para la Estación 1: Agua y Energía (Ciclo del agua)
-                    dbCmd.CommandText = @"INSERT INTO ESTACION (id_estacion, nombre_estacion, codigo_qr, prefab) 
-                                          VALUES (1, 'Agua y Energía', 'QR_AGUA_01', 'Modelos3D/Estacion1/CuboPrueba1')";
-                    dbCmd.ExecuteNonQuery();
-                    Debug.Log("Estación 1 de prueba insertada con éxito.");
-                }
+                dbCmd.CommandText = @"INSERT OR REPLACE INTO ESTACION 
+                                      (id_estacion, nombre_estacion, codigo_qr, descripcion, ficha_informativa, recursos_multimedia, nombre_modelo, prefab, formato) 
+                                      VALUES (1, 
+                                      'Estación 1: El Ciclo del Agua', 
+                                      'QR_AGUA_01', 
+                                      'El origen de la vida (H2O). Molécula formada por dos átomos de hidrógeno y uno de oxígeno.', 
+                                      'El agua modela la Tierra y provee energía. En su ciclo de permanente transformación, posee tres estados: sólido, líquido y gaseoso. Los ríos fluyen continuamente desde la alta montaña hasta desembocar en el mar, lagos u otros ríos.', 
+                                      'Audios/Estacion1_Agua', 
+                                      'CuboPrueba1', 
+                                      'Modelos3D/Estacion1/CuboPrueba1', 
+                                      '.prefab')";
+                dbCmd.ExecuteNonQuery();
             }
             dbConnection.Close();
         }
     }
 
-    // 2. ESTA ES LA FUNCIÓN QUE LLAMARÁS CUANDO VUFORIA DETECTE EL QR
     public void ProcesarEscaneoQR(string textoEscaneadoPorVuforia)
     {
         using (IDbConnection dbConnection = new SqliteConnection(rutaDB))
@@ -89,41 +115,34 @@ public class GestionSQLite : MonoBehaviour
             dbConnection.Open();
             using (IDbCommand dbCmd = dbConnection.CreateCommand())
             {
-                // Buscamos el prefab asociado a ese código QR exacto
-                dbCmd.CommandText = $"SELECT prefab FROM ESTACION WHERE codigo_qr = '{textoEscaneadoPorVuforia}'";
+                dbCmd.CommandText = $"SELECT prefab, nombre_estacion, ficha_informativa FROM ESTACION WHERE codigo_qr = '{textoEscaneadoPorVuforia}'";
                 
                 using (IDataReader reader = dbCmd.ExecuteReader())
                 {
-                    if (reader.Read()) // Si encontró una coincidencia en la base de datos
+                    if (reader.Read()) 
                     {
                         string rutaPrefab = reader.GetString(0);
-                        Debug.Log("¡QR Válido! Cargando modelo desde: " + rutaPrefab);
+                        string nombreEstacion = reader.GetString(1);
+                        string fichaInformativa = reader.GetString(2);
+
+                        // Inyectamos textos
+                        if (txtTitulo != null) txtTitulo.text = nombreEstacion;
+                        if (txtDescripcion != null) txtDescripcion.text = fichaInformativa;
                         
-                        // Unity busca el archivo en la carpeta especial 'Resources'
+                        // --- LÓGICA DE TRANSICIÓN DE PANTALLA ---
+                        if (pantallaEscaner != null) pantallaEscaner.style.display = DisplayStyle.None; // Oculta el UI del escáner
+                        if (pantallaDetalle != null) pantallaDetalle.style.display = DisplayStyle.Flex; // Muestra la tarjeta del hito
+
+                        Debug.Log("¡QR Válido! Pantalla cambiada e instanciando modelo.");
+                        
                         GameObject modeloCargado = Resources.Load<GameObject>(rutaPrefab);
-                        
                         if (modeloCargado != null)
                         {
-                            // 1. Instanciamos el modelo y lo guardamos en una variable
                             GameObject modelo = Instantiate(modeloCargado);
-
-                            // 2. Reducimos su tamaño al 20%
                             modelo.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-
-                            // 3. Lo posicionamos 1.5 metros justo frente a la cámara, y 50 cm más abajo
-                            modelo.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 1.5f + Vector3.down * 0.5f;
-
-                            // 4. Hacemos que el modelo rote para mirar directamente hacia la cámara
+                            modelo.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 1.5f + Vector3.up * 0.2f;
                             modelo.transform.LookAt(Camera.main.transform);
                         }
-                        else
-                        {
-                            Debug.LogError("No se encontró el archivo 3D en la carpeta Resources.");
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogWarning("QR Inválido o dañado. Mostrar alerta al usuario.");
                     }
                 }
             }

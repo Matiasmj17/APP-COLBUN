@@ -148,6 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d498c3a123c2ef468a90bee459878e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GestorSQLite
+  uiDocument: {fileID: 1254469386}
 --- !u!4 &462712256
 Transform:
   m_ObjectHideFlags: 0
@@ -529,8 +530,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1425959086}
   - component: {fileID: 1425959085}
-  - component: {fileID: 1425959084}
   - component: {fileID: 1425959087}
+  - component: {fileID: 1425959088}
   m_Layer: 0
   m_Name: Barcode
   m_TagString: Untagged
@@ -538,24 +539,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1425959084
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1425959083}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -287086267, guid: 8a9a760f95896c34689febc965510927, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Vuforia.Unity.Engine.dll::Vuforia.BarcodePreview
-  mObserverBehaviour: {fileID: 1425959085}
-  mHiddenRoot: {fileID: 0}
-  mTargetName: 
-  mDatasetName: 
-  mCastedBehaviour: {fileID: 1425959085}
-  mBarcodeReferencePreview: {fileID: 0}
 --- !u!114 &1425959085
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -577,7 +560,7 @@ MonoBehaviour:
   mDetectMultipleBarcodes: 1
   mShowAdvanced: 0
   mShowObservedTypes: 0
-  mPreview: {fileID: 1425959084}
+  mPreview: {fileID: 1425959088}
 --- !u!4 &1425959086
 Transform:
   m_ObjectHideFlags: 0
@@ -606,6 +589,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LectorQR
   gestorBD: {fileID: 462712255}
+--- !u!114 &1425959088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1425959083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -287086267, guid: 8a9a760f95896c34689febc965510927, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vuforia.Unity.Engine.dll::Vuforia.BarcodePreview
+  mObserverBehaviour: {fileID: 1425959085}
+  mHiddenRoot: {fileID: 0}
+  mTargetName: 
+  mDatasetName: 
+  mCastedBehaviour: {fileID: 1425959085}
+  mBarcodeReferencePreview: {fileID: 0}
 --- !u!1 &1979865332
 GameObject:
   m_ObjectHideFlags: 0

@@ -13,6 +13,7 @@ public class DetalleEstacionController : MonoBehaviour
 
     AudioSource audioSource;
     GameObject modeloActual;
+    string codigoEstacionActual;
     bool pausado;
 
     void OnEnable()
@@ -43,10 +44,11 @@ public class DetalleEstacionController : MonoBehaviour
     }
 
     // Lo llama GestionSQLite cuando el QR es válido
-    public void Mostrar(string titulo, string subtitulo, string ficha, string rutaAudio, GameObject modelo)
+    public void Mostrar(string titulo, string subtitulo, string ficha, string rutaAudio, GameObject modelo, string codigoQR)
     {
         DestruirModelo();
         modeloActual = modelo;
+        codigoEstacionActual = codigoQR;
 
         txtTitulo.text      = titulo;
         txtSubtitulo.text   = subtitulo;
@@ -105,8 +107,12 @@ public class DetalleEstacionController : MonoBehaviour
         audioSource.Stop();
         pausado = false;
         DestruirModelo();
+        if (PasaporteController.Instancia != null)
+            PasaporteController.Instancia.ConfirmarEstacionDescubierta(codigoEstacionActual);
+        if (ControladorCamaraAR.Instancia != null) ControladorCamaraAR.Instancia.DesactivarCamaraAR();
         pantallaDetalle.style.display   = DisplayStyle.None;
         pantallaPasaporte.style.display = DisplayStyle.Flex;
+        codigoEstacionActual = null;
     }
 
     void DestruirModelo()

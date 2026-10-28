@@ -6,6 +6,8 @@ using UnityEngine.UIElements;                // UI Toolkit (UIDocument, Label, B
 [RequireComponent(typeof(UIDocument))]       // Obliga a que exista un UIDocument en este objeto
 public class PasaporteController : MonoBehaviour
 {
+    public static PasaporteController Instancia { get; private set; }
+
     enum Estado { Descubierta, Pendiente, Bloqueada }   // Los 3 estados del mockup
 
     class Estacion                                       // Datos de una estación
@@ -24,7 +26,7 @@ public class PasaporteController : MonoBehaviour
     // Los estados NO se escriben aquí: se calculan con el progreso guardado.
     readonly List<Estacion> estaciones = new List<Estacion>
     {
-        new Estacion { numero = 1, titulo = "Agua y Energía",        descripcion = "Transformación cinética y aprovechamiento hídrico", codigoQR = "ANGOSTURA-EST1" },
+        new Estacion { numero = 1, titulo = "Agua y Energía",        descripcion = "Transformación cinética y aprovechamiento hídrico", codigoQR = "QR_AGUA_01" },
         new Estacion { numero = 2, titulo = "Flora Nativa",          descripcion = "Quillay, Peumo y Espino",                          codigoQR = "ANGOSTURA-EST2" },
         new Estacion { numero = 3, titulo = "Fauna del Maule",       descripcion = "Aproximándote al punto de observación",            codigoQR = "ANGOSTURA-EST3" },
         new Estacion { numero = 4, titulo = "Aves de Ribera",        descripcion = "Humedales y biodiversidad ribereña",               codigoQR = "ANGOSTURA-EST4" },
@@ -36,6 +38,15 @@ public class PasaporteController : MonoBehaviour
     VisualElement pantallaEscaner;           // Contenedor de la pantalla 2 (cámara)
     Label lblMensaje;                        // Aviso sobre la cámara ("Código QR escaneado...")
     IVisualElementScheduledItem tareaOcultar;// Temporizador que oculta el aviso
+    VisualElement panelCodigoManual;
+    Button btnMostrarCodigo, btnValidarCodigo, btnCancelarCodigo;
+    TextField campoCodigo;
+    GestionSQLite gestorBD;
+
+    void Awake()
+    {
+        Instancia = this;
+    }
 
     void OnEnable()                          // Se ejecuta cuando el objeto se activa (el UI ya existe)
     {
@@ -44,11 +55,19 @@ public class PasaporteController : MonoBehaviour
         pantallaPasaporte = raiz.Q<VisualElement>("pantalla-pasaporte");   // Busca por el atributo name del UXML
         pantallaEscaner   = raiz.Q<VisualElement>("pantalla-escaner");
         lblMensaje        = raiz.Q<Label>("lbl-mensaje");
+        panelCodigoManual = raiz.Q<VisualElement>("panel-codigo-manual");
+        campoCodigo       = raiz.Q<TextField>("txt-codigo-manual");
+        btnMostrarCodigo  = raiz.Q<Button>("btn-simular");
+        btnValidarCodigo  = raiz.Q<Button>("btn-validar-codigo");
+        btnCancelarCodigo = raiz.Q<Button>("btn-cancelar-codigo");
+        gestorBD = FindAnyObjectByType<GestionSQLite>();
 
         raiz.Q<Button>("btn-escanear").clicked   += IrAEscaner;            // Botón flotante "Escanear QR"
         raiz.Q<Button>("btn-nav-camara").clicked += IrAEscaner;            // Botón "Cámara AR" de la barra inferior
         raiz.Q<Button>("btn-volver").clicked     += IrAPasaporte;          // Botón "Volver" del visor
-        raiz.Q<Button>("btn-simular").clicked    += SimularEscaneo;        // Botón de prueba (sin cámara)
+        btnMostrarCodigo.clicked += MostrarEntradaCodigo;
+        btnValidarCodigo.clicked += ValidarCodigoManual;
+        btnCancelarCodigo.clicked += OcultarEntradaCodigo;
 
         if (qrScanner != null) qrScanner.OnQRDetected += ProcesarQR;       // Nos avisan cuando se lee un QR
 
@@ -59,6 +78,7 @@ public class PasaporteController : MonoBehaviour
     void OnDisable()                         // Al desactivarse el objeto
     {
         if (qrScanner != null) qrScanner.OnQRDetected -= ProcesarQR;       // Nos desuscribimos
+        if (Instancia == this) Instancia = null;
     }
 
     // ---------- Navegación ----------
@@ -67,14 +87,19 @@ public class PasaporteController : MonoBehaviour
     {
         pantallaPasaporte.style.display = DisplayStyle.Flex;   // Muestra el pasaporte
         pantallaEscaner.style.display   = DisplayStyle.None;   // Oculta el visor
+        panelCodigoManual.style.display = DisplayStyle.None;
+        btnMostrarCodigo.style.display  = DisplayStyle.Flex;
         if (qrScanner != null) qrScanner.escaneando = false;   // Apaga el escaneo (ahorra batería)
+        if (ControladorCamaraAR.Instancia != null) ControladorCamaraAR.Instancia.DesactivarCamaraAR();
     }
 
     void IrAEscaner()
     {
         pantallaPasaporte.style.display = DisplayStyle.None;   // Oculta el pasaporte (si no, tapa la cámara)
         pantallaEscaner.style.display   = DisplayStyle.Flex;   // Muestra el visor transparente
+        OcultarEntradaCodigo();
         if (qrScanner != null) qrScanner.escaneando = true;    // Enciende el escaneo
+        if (ControladorCamaraAR.Instancia != null) ControladorCamaraAR.Instancia.ActivarCamaraAR();
     }
 
     // ---------- Lógica del QR ----------
@@ -117,10 +142,76 @@ public class PasaporteController : MonoBehaviour
         raiz.schedule.Execute(IrAPasaporte).StartingIn(2000);  // A los 2 s vuelve al pasaporte para ver el cambio
     }
 
-    void SimularEscaneo()                                      // Botón "Ingresar Código" (solo para pruebas)
+    void MostrarEntradaCodigo()
     {
-        var pendiente = estaciones.Find(x => x.estado == Estado.Pendiente);   // Estación que toca ahora
-        ProcesarQR(pendiente != null ? pendiente.codigoQR : "ANGOSTURA-EST1"); // Simula leer su QR
+        btnMostrarCodigo.style.display = DisplayStyle.None;
+        panelCodigoManual.style.display = DisplayStyle.Flex;
+        campoCodigo.value = "";
+        campoCodigo.Focus();
+    }
+
+    void OcultarEntradaCodigo()
+    {
+        if (panelCodigoManual != null) panelCodigoManual.style.display = DisplayStyle.None;
+        if (btnMostrarCodigo != null) btnMostrarCodigo.style.display = DisplayStyle.Flex;
+    }
+
+    void ValidarCodigoManual()
+    {
+        string codigo = (campoCodigo.value ?? "").Trim().ToUpperInvariant();
+        if (codigo.Length == 0)
+        {
+            MostrarMensaje("Escribe el código de la estación", true);
+            return;
+        }
+
+        Estacion estacion = estaciones.Find(x => x.codigoQR == codigo);
+        if (estacion == null)
+        {
+            MostrarMensaje("Código no válido", true);
+            return;
+        }
+        if (estacion.estado == Estado.Descubierta)
+        {
+            MostrarMensaje("Esta estación ya está descubierta", true);
+            return;
+        }
+        if (estacion.estado == Estado.Bloqueada)
+        {
+            MostrarMensaje("Descubre primero las estaciones anteriores", true);
+            return;
+        }
+        if (gestorBD == null) gestorBD = FindAnyObjectByType<GestionSQLite>();
+        if (gestorBD == null)
+        {
+            MostrarMensaje("No se encontró la base de datos de estaciones", true);
+            return;
+        }
+
+        if (ControladorCamaraAR.Instancia != null)
+            ControladorCamaraAR.Instancia.DetenerLecturaQR();
+
+        if (gestorBD.ProcesarEscaneoQR(codigo))
+        {
+            panelCodigoManual.style.display = DisplayStyle.None;
+        }
+        else
+        {
+            MostrarMensaje("Código válido, pero todavía no está registrado en la base de datos", true);
+            if (ControladorCamaraAR.Instancia != null)
+                ControladorCamaraAR.Instancia.ActivarCamaraAR();
+        }
+    }
+
+    public void ConfirmarEstacionDescubierta(string codigo)
+    {
+        if (string.IsNullOrEmpty(codigo)) return;
+        Estacion estacion = estaciones.Find(x => x.codigoQR == codigo.Trim().ToUpperInvariant());
+        if (estacion == null) return;
+
+        PlayerPrefs.SetInt("estacion_" + estacion.numero, 1);
+        PlayerPrefs.Save();
+        RefrescarTodo();
     }
 
     [ContextMenu("Reiniciar progreso")]                        // Clic derecho sobre el componente en el Inspector
@@ -177,6 +268,7 @@ public class PasaporteController : MonoBehaviour
     {
         var tarjeta = new VisualElement();
         tarjeta.AddToClassList("estacion");
+        if (e.estado == Estado.Descubierta) tarjeta.AddToClassList("estacion--descubierta");
         if (e.estado == Estado.Pendiente) tarjeta.AddToClassList("estacion--pendiente");
         if (e.estado == Estado.Bloqueada) tarjeta.AddToClassList("estacion--bloqueada");
 

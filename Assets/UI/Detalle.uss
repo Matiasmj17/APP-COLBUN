@@ -1,0 +1,46 @@
+/* ===== Ficha de la estación (pantalla-detalle) ===== */
+.detalle { background-color: rgba(0,0,0,0); }   /* transparente arriba: se ve la cámara y el modelo 3D */
+
+.detalle__aviso {
+    position: absolute; top: 90px; left: 50px; right: 50px;
+    background-color: rgba(11,37,64,0.92); color: #FFFFFF;
+    font-size: 38px; -unity-font-style: bold; -unity-text-align: middle-center;
+    padding: 30px; border-radius: 40px; white-space: normal;
+}
+.detalle__hoja {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 1120px;
+    background-color: #FFFFFF;
+    border-top-left-radius: 70px; border-top-right-radius: 70px;
+    padding: 50px 50px 60px 50px;
+}
+.detalle__pildora   { align-self: flex-start; margin: 0 0 16px 0; }
+.detalle__subtitulo { font-size: 34px; margin: 0 0 20px 0; white-space: normal; }
+.detalle__scroll    { flex-grow: 1; flex-shrink: 1; margin-bottom: 20px; }
+.detalle__ficha     { font-size: 34px; color: #334155; white-space: normal; }
+
+.detalle__audio {
+    flex-direction: row; align-items: center;
+    background-color: #F1F5F9; border-radius: 40px;
+    padding: 28px; margin-bottom: 30px;
+}
+.detalle__play {
+    width: 260px; height: 100px; border-radius: 50px;
+    background-color: #0A5CAD; color: #FFFFFF;
+    font-size: 34px; -unity-font-style: bold;
+    border-width: 0; margin: 0 30px 0 0;
+}
+.detalle__audio-texto  { flex-grow: 1; }
+.detalle__audio-titulo { font-size: 34px; }
+.detalle__audio-tiempo { font-size: 28px; }
+
+.detalle__continuar { width: auto; align-self: stretch; margin: 0; }
+
+
+/* ===== Arreglo del ícono de Cámara AR en la barra inferior =====
+   El SVG es blanco, por eso se perdía sobre el fondo blanco. Se le pone un círculo oscuro detrás. */
+.nav-btn-camara .nav-icono.icono-camara-ar {
+    background-color: #0B2540; border-radius: 40px;
+    width: 80px; height: 80px; min-width: 80px; min-height: 80px;
+    margin-top: -25px;
+    background-size: 55% 55%; background-position: center; background-repeat: no-repeat;
+}

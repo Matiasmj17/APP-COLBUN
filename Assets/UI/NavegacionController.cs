@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 [RequireComponent(typeof(UIDocument))]
 public class NavegacionController : MonoBehaviour
 {
-    VisualElement barra, pantallaPasaporte, pantallaEscaner, pantallaEncuesta, pantallaKiba;
+    VisualElement barra, pantallaPasaporte, pantallaEscaner, pantallaDetalle, pantallaEncuesta, pantallaKiba;
     Button btnPasaporte, btnCamara, btnKiba, btnEncuesta;
 
     void OnEnable()
@@ -14,6 +14,7 @@ public class NavegacionController : MonoBehaviour
         barra            = raiz.Q<VisualElement>("barra-nav");
         pantallaPasaporte = raiz.Q<VisualElement>("pantalla-pasaporte");
         pantallaEscaner   = raiz.Q<VisualElement>("pantalla-escaner");
+        pantallaDetalle   = raiz.Q<VisualElement>("pantalla-detalle");
         pantallaEncuesta  = raiz.Q<VisualElement>("pantalla-encuesta");
         pantallaKiba      = raiz.Q<VisualElement>("pantalla-kiba");
 
@@ -48,8 +49,9 @@ public class NavegacionController : MonoBehaviour
 
     void Actualizar()
     {
-        bool visorAbierto = pantallaEscaner.resolvedStyle.display != DisplayStyle.None;
-        barra.style.display = visorAbierto ? DisplayStyle.None : DisplayStyle.Flex;   // sin barra en el visor
+        bool visorAbierto  = pantallaEscaner.resolvedStyle.display != DisplayStyle.None;
+        bool fichaAbierta  = pantallaDetalle != null && pantallaDetalle.resolvedStyle.display != DisplayStyle.None;
+        barra.style.display = (visorAbierto || fichaAbierta) ? DisplayStyle.None : DisplayStyle.Flex;   // sin barra en el visor ni en la ficha
 
         Marcar(btnPasaporte, pantallaPasaporte);
         Marcar(btnKiba, pantallaKiba);

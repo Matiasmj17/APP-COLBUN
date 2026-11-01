@@ -151,7 +151,7 @@ MonoBehaviour:
   detalle: {fileID: 1254469390}
   distanciaModelo: 1.5
   alturaModelo: 0.3
-  escalaModelo: 0.2
+  escalaModelo: 0.005
 --- !u!4 &462712256
 Transform:
   m_ObjectHideFlags: 0
@@ -338,7 +338,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7be68a2e21b67fc448a58838afad3059, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ControladorCamaraAR
-  camaraVuforia: {fileID: 1979865332}
 --- !u!1 &1254469384
 GameObject:
   m_ObjectHideFlags: 0
@@ -424,7 +423,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a65117369af76243a5c6381c6fab967, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NavegacionController
-  controladorCamaraAR: {fileID: 0}
 --- !u!114 &1254469389
 MonoBehaviour:
   m_ObjectHideFlags: 0

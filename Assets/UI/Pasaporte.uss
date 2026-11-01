@@ -88,6 +88,9 @@
 }
 
 /* Estado: pendiente */
+.estacion--descubierta { background-color: #ECFDF5; }
+.estacion--descubierta .estacion__circulo { background-color: #DCFCE7; color: #15803D; }
+
 .estacion--pendiente { background-color: #EEF1F6; }
 .estacion--pendiente .estacion__circulo { background-color: #E2E8F0; color: #475569; }
 .estacion--pendiente .estacion__pildora { background-color: #DBEAFE; color: #1D4ED8; }
@@ -190,6 +193,20 @@
     font-size: 40px; -unity-font-style: bold;
     border-width: 0; border-radius: 30px; margin: 0;
 }
+
+.escaner__codigo-manual {
+    position: absolute; left: 40px; right: 40px; bottom: 110px;
+    padding: 32px; border-radius: 30px; background-color: #FFFFFF;
+}
+.codigo-manual__titulo { color: #0F172A; font-size: 34px; -unity-font-style: bold; margin-bottom: 18px; }
+.codigo-manual__campo { font-size: 32px; margin-bottom: 16px; }
+.codigo-manual__botones { flex-direction: row; justify-content: space-between; }
+.codigo-manual__validar, .codigo-manual__cancelar {
+    flex-grow: 1; height: 90px; margin: 0 8px; border-width: 0;
+    border-radius: 24px; font-size: 30px; -unity-font-style: bold;
+}
+.codigo-manual__validar { background-color: #0A5CAD; color: #FFFFFF; }
+.codigo-manual__cancelar { background-color: #E2E8F0; color: #0F172A; }
 
 /* ---------- Logos de Colbún ---------- */
 .logo-colbun-header {

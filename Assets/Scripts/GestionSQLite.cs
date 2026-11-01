@@ -103,33 +103,34 @@ public class GestionSQLite : MonoBehaviour
                          'El origen de la vida (H2O). Molécula formada por dos átomos de hidrógeno y uno de oxígeno.', 
                          'El agua modela la Tierra y provee energía. En su ciclo de permanente transformación, posee tres estados: sólido, líquido y gaseoso. Los ríos fluyen continuamente desde la alta montaña hasta desembocar en el mar, lagos u otros ríos.', 
                          'Modelos3D/Audios/Estacion1_Agua', 
-                         'CuboPrueba1', 
-                         'Modelos3D/Estacion1/CuboPrueba1', 
+                         'CicloDeAguaPrefab', 
+                         'Modelos3D/Estacion1/CicloDeAguaPrefab', 
                          '.prefab')");
         }
     }
 
     // Este es el método que llama LectorQR. Solo protege con try/catch;
     // la lógica real vive en ProcesarEscaneoQRInterno.
-    public void ProcesarEscaneoQR(string textoEscaneadoPorVuforia)
+    public bool ProcesarEscaneoQR(string textoEscaneadoPorVuforia)
     {
         try
         {
-            ProcesarEscaneoQRInterno(textoEscaneadoPorVuforia);
+            return ProcesarEscaneoQRInterno(textoEscaneadoPorVuforia);
         }
         catch (System.Exception e)
         {
             LogDiag("ProcesarEscaneoQR", e);
+            return false;
         }
     }
 
-    private void ProcesarEscaneoQRInterno(string textoEscaneadoPorVuforia)
+    private bool ProcesarEscaneoQRInterno(string textoEscaneadoPorVuforia)
     {
         // Validación: se descartan textos vacíos o demasiado largos
         if (string.IsNullOrWhiteSpace(textoEscaneadoPorVuforia) || textoEscaneadoPorVuforia.Length > 100)
         {
             Debug.LogWarning("QR inválido.");
-            return;
+            return false;
         }
 
         using (var db = new SQLiteConnection(rutaDB))
@@ -143,7 +144,7 @@ public class GestionSQLite : MonoBehaviour
             if (filas.Count == 0)
             {
                 Debug.LogWarning("[DIAG] QR no encontrado en la BD: " + textoEscaneadoPorVuforia);
-                return;
+                return false;
             }
 
             FilaEstacion fila = filas[0];
@@ -171,6 +172,7 @@ public class GestionSQLite : MonoBehaviour
                     modelo.transform.localScale = Vector3.one * escalaModelo;
                     modelo.transform.position = cam.position + cam.forward * distanciaModelo + Vector3.up * alturaModelo;
                     modelo.transform.LookAt(cam);
+                    modelo.AddComponent<InteraccionModeloAR>();
                 }
                 else
                 {
@@ -183,8 +185,9 @@ public class GestionSQLite : MonoBehaviour
             }
 
             // Ficha: textos, audio y cambio de pantalla
-            if (detalle != null) detalle.Mostrar(nombre, descripcion, ficha, rutaAudio, modelo);
+            if (detalle != null) detalle.Mostrar(nombre, descripcion, ficha, rutaAudio, modelo, textoEscaneadoPorVuforia);
             else Debug.LogWarning("Falta arrastrar el objeto Interfaz en el campo 'Detalle' de GestionSQLite.");
+            return detalle != null;
         }
     }
 }

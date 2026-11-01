@@ -1,34 +1,74 @@
 using UnityEngine;
-using UnityEngine.XR.ARFoundation;
+using Vuforia;
 
+/// <summary>
+/// Controla cuándo Vuforia usa la cámara. La cámara permanece activa durante
+/// el visor y la ficha AR, y se pausa en las pantallas normales de la app.
+/// </summary>
+[DefaultExecutionOrder(-1000)]
 public class ControladorCamaraAR : MonoBehaviour
 {
-    [Tooltip("Arrastra aquí el GameObject 'AR Session' de tu jerarquía")]
-    public ARSession arSession;
+    public static ControladorCamaraAR Instancia { get; private set; }
 
-    void Start()
+    VuforiaBehaviour vuforia;
+    public bool EscaneoQRActivo { get; private set; }
+
+    void Awake()
     {
-        // Apaga la cámara y el rastreo apenas inicia la app para evitar lag
-        DesactivarCamaraAR();
+        Instancia = this;
+        ConfigurarFrecuenciaObjetivo();
+        vuforia = FindAnyObjectByType<VuforiaBehaviour>();
+        PausarVuforia();
     }
 
-    // Llama a este método desde el botón flotante de escanear QR
+    void OnApplicationFocus(bool tieneFoco)
+    {
+        // Android puede cambiar la frecuencia disponible al volver a la app
+        // (por ejemplo, al salir del ahorro de batería).
+        if (tieneFoco) ConfigurarFrecuenciaObjetivo();
+    }
+
+    void ConfigurarFrecuenciaObjetivo()
+    {
+        float hzPantalla = (float)Screen.currentResolution.refreshRateRatio.value;
+        int objetivo = hzPantalla > 0f ? Mathf.RoundToInt(hzPantalla) : 60;
+
+        // Mantiene un límite razonable si otro dispositivo informa más de 120 Hz.
+        Application.targetFrameRate = Mathf.Clamp(objetivo, 30, 120);
+        Debug.Log("Objetivo de FPS: " + Application.targetFrameRate +
+                  " (frecuencia detectada: " + hzPantalla.ToString("F1") + " Hz)");
+    }
+
+    void OnDestroy()
+    {
+        if (Instancia == this) Instancia = null;
+    }
+
+    // Se llama al entrar en la pantalla del visor.
     public void ActivarCamaraAR()
     {
-        if (arSession != null)
-        {
-            arSession.enabled = true;
-            Debug.Log("Cámara AR Encendida - Escáner activo");
-        }
+        if (vuforia == null) vuforia = FindAnyObjectByType<VuforiaBehaviour>();
+        if (vuforia != null) vuforia.enabled = true;
+        EscaneoQRActivo = true;
+        Debug.Log("Vuforia activa: buscando un código QR.");
     }
 
-    // Llama a este método desde los 4 botones de navegación inferiores
+    // Deja de buscar códigos, pero conserva la cámara para mostrar el modelo AR.
+    public void DetenerLecturaQR()
+    {
+        EscaneoQRActivo = false;
+    }
+
+    // Se llama al volver a una pantalla sin AR.
     public void DesactivarCamaraAR()
     {
-        if (arSession != null)
-        {
-            arSession.enabled = false;
-            Debug.Log("Cámara AR Apagada - Ahorrando batería");
-        }
+        EscaneoQRActivo = false;
+        PausarVuforia();
+    }
+
+    void PausarVuforia()
+    {
+        if (vuforia == null) vuforia = FindAnyObjectByType<VuforiaBehaviour>();
+        if (vuforia != null) vuforia.enabled = false;
     }
 }

@@ -66,6 +66,14 @@
         </ui:VisualElement>
         <ui:Label name="lbl-mensaje" picking-mode="Ignore" class="escaner__mensaje"/>
         <ui:Button name="btn-simular" text="Ingresar Código" class="escaner__simular"/>
+        <ui:VisualElement name="panel-codigo-manual" class="escaner__codigo-manual" style="display: none;">
+            <ui:Label text="Ingresa el código de la estación" class="codigo-manual__titulo"/>
+            <ui:TextField name="txt-codigo-manual" label="Código" class="codigo-manual__campo"/>
+            <ui:VisualElement class="codigo-manual__botones">
+                <ui:Button name="btn-validar-codigo" text="Validar código" class="codigo-manual__validar"/>
+                <ui:Button name="btn-cancelar-codigo" text="Cancelar" class="codigo-manual__cancelar"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="pantalla-encuesta" class="pantalla pasaporte" style="display: none;">
         <ui:ScrollView mode="Vertical" vertical-scroller-visibility="Hidden" class="encuesta-scroll">

@@ -150,8 +150,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GestorSQLite
   detalle: {fileID: 1254469390}
   distanciaModelo: 1.5
-  alturaModelo: 0.3
-  escalaModelo: 0.005
+  alturaModelo: 0.2
+  escalaModelo: 3
 --- !u!4 &462712256
 Transform:
   m_ObjectHideFlags: 0

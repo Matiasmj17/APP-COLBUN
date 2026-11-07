@@ -167,11 +167,12 @@ public class GestionSQLite : MonoBehaviour
 
                 if (camara != null)
                 {
-                    Transform cam = camara.transform;
+                    Vector3 posicionModelo = camara.transform.position + camara.transform.forward * distanciaModelo;
+                    posicionModelo.y += alturaModelo;
+                    
                     modelo = Instantiate(modeloCargado);
+                    modelo.transform.position = posicionModelo;
                     modelo.transform.localScale = Vector3.one * escalaModelo;
-                    modelo.transform.position = cam.position + cam.forward * distanciaModelo + Vector3.up * alturaModelo;
-                    modelo.transform.LookAt(cam);
                     modelo.AddComponent<InteraccionModeloAR>();
                 }
                 else

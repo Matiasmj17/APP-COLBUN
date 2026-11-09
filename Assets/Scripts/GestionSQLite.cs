@@ -1,6 +1,7 @@
 using System.IO;
 using UnityEngine;
 using SQLite;   // viene del paquete SQLite-net for Unity (gilzoide)
+using Vuforia;
 
 public class GestionSQLite : MonoBehaviour
 {
@@ -9,10 +10,15 @@ public class GestionSQLite : MonoBehaviour
     [Header("Ficha de la estación (arrastra aquí el objeto Interfaz)")]
     public DetalleEstacionController detalle;
 
-    [Header("Cómo aparece el modelo 3D frente a la cámara")]
-    public float distanciaModelo = 1.5f;   // metros hacia adelante
-    public float alturaModelo    = 0.5f;   // metros hacia arriba (para que quede sobre la ficha)
-    public float escalaModelo    = 0.2f;
+    [Header("Escala física del modelo (1 unidad Unity = 1 metro)")]
+    [Min(0.01f)] public float escalaModelo = 1f;
+
+    AnchorBehaviour anclaPiso;
+    PlaneFinderBehaviour detectorPiso;
+    ContentPositioningBehaviour posicionContenido;
+    GameObject modeloPendiente;
+    bool esperandoPiso;
+    bool eventoPisoRegistrado;
 
     // Recibe el resultado de la consulta. Los nombres coinciden con las columnas de la tabla.
     // [Preserve] evita que el build de Android borre estas propiedades (SQLite-net las usa por reflexión).
@@ -28,6 +34,10 @@ public class GestionSQLite : MonoBehaviour
 
     void Start()
     {
+        // Usa los objetos Ground Plane creados en la escena desde el menú de Vuforia.
+        // No se deben crear behaviours nuevos al escanear: Vuforia ya está iniciado.
+        ConfigurarGroundPlane();
+
         try
         {
             rutaDB = Path.Combine(Application.persistentDataPath, "registro_interacciones.db");
@@ -156,29 +166,14 @@ public class GestionSQLite : MonoBehaviour
 
             Debug.Log("¡QR Válido! Mostrando ficha e instanciando modelo.");
 
-            // Modelo 3D frente a la cámara
+            // El QR solo identifica la estación. Ground Plane fija el modelo al piso.
             GameObject modelo = null;
             GameObject modeloCargado = Resources.Load<GameObject>(rutaPrefab);
             if (modeloCargado != null)
             {
-                // Si la cámara no tiene el tag MainCamera, usamos la primera cámara que exista
-                Camera camara = Camera.main;
-                if (camara == null) camara = FindFirstObjectByType<Camera>();
-
-                if (camara != null)
-                {
-                    Vector3 posicionModelo = camara.transform.position + camara.transform.forward * distanciaModelo;
-                    posicionModelo.y += alturaModelo;
-                    
-                    modelo = Instantiate(modeloCargado);
-                    modelo.transform.position = posicionModelo;
-                    modelo.transform.localScale = Vector3.one * escalaModelo;
-                    modelo.AddComponent<InteraccionModeloAR>();
-                }
-                else
-                {
-                    Debug.LogWarning("[DIAG] No se encontró ninguna cámara para ubicar el modelo.");
-                }
+                modelo = PrepararModeloParaPiso(modeloCargado);
+                if (modelo == null)
+                    Debug.LogWarning("[DIAG] No se pudo preparar el modelo para Ground Plane.");
             }
             else
             {
@@ -190,5 +185,89 @@ public class GestionSQLite : MonoBehaviour
             else Debug.LogWarning("Falta arrastrar el objeto Interfaz en el campo 'Detalle' de GestionSQLite.");
             return detalle != null;
         }
+    }
+
+    GameObject PrepararModeloParaPiso(GameObject prefab)
+    {
+        try
+        {
+            if (!ConfigurarGroundPlane()) return null;
+        }
+        catch (System.Exception e)
+        {
+            // No bloquea la ficha de la estación si Ground Plane falla en el equipo.
+            LogDiag("PrepararGroundPlane", e);
+            return null;
+        }
+
+        if (modeloPendiente != null) Destroy(modeloPendiente);
+
+        modeloPendiente = Instantiate(prefab, anclaPiso.transform);
+        modeloPendiente.name = prefab.name;
+        modeloPendiente.transform.localPosition = Vector3.zero;
+        modeloPendiente.transform.localRotation = Quaternion.Euler(0f, prefab.transform.eulerAngles.y, 0f);
+        modeloPendiente.transform.localScale = Vector3.one * escalaModelo;
+
+        // Alinea el punto más bajo de las mallas con la superficie detectada.
+        Renderer[] renderers = modeloPendiente.GetComponentsInChildren<Renderer>(true);
+        if (renderers.Length > 0)
+        {
+            float minimoY = float.PositiveInfinity;
+            foreach (Renderer renderer in renderers)
+                minimoY = Mathf.Min(minimoY, renderer.bounds.min.y);
+            modeloPendiente.transform.localPosition += Vector3.up * -minimoY;
+        }
+
+        modeloPendiente.SetActive(false);
+        esperandoPiso = true;
+        Debug.Log("QR válido. Buscando automáticamente el piso para colocar el modelo.");
+        return modeloPendiente;
+    }
+
+    bool ConfigurarGroundPlane()
+    {
+        if (detectorPiso == null)
+            detectorPiso = FindAnyObjectByType<PlaneFinderBehaviour>();
+        if (posicionContenido == null)
+            posicionContenido = FindAnyObjectByType<ContentPositioningBehaviour>();
+
+        if (posicionContenido == null || detectorPiso == null)
+        {
+            Debug.LogError("No se encontró Plane Finder con Content Positioning Behaviour en la escena.");
+            return false;
+        }
+
+        anclaPiso = posicionContenido.AnchorStage;
+        if (anclaPiso == null)
+        {
+            Debug.LogError("Asigna Ground Plane Stage en el campo Anchor Stage del Plane Finder.");
+            return false;
+        }
+
+        posicionContenido.AnchorStage = anclaPiso;
+        posicionContenido.DuplicateStage = false;
+        detectorPiso.HitTestMode = HitTestMode.AUTOMATIC;
+
+        if (!eventoPisoRegistrado)
+        {
+            detectorPiso.OnAutomaticHitTest.AddListener(AlDetectarPiso);
+            eventoPisoRegistrado = true;
+        }
+
+        return true;
+    }
+
+    void AlDetectarPiso(HitTestResult resultado)
+    {
+        if (!esperandoPiso || resultado == null) return;
+
+        esperandoPiso = false;
+        posicionContenido.PositionContentAtPlaneAnchor(resultado);
+        ActivarModeloColocado();
+    }
+
+    void ActivarModeloColocado()
+    {
+        if (modeloPendiente != null) modeloPendiente.SetActive(true);
     }
 }

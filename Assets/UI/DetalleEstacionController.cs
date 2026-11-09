@@ -8,8 +8,9 @@ using UnityEngine.UIElements;
 public class DetalleEstacionController : MonoBehaviour
 {
     VisualElement pantallaDetalle, pantallaEscaner, pantallaPasaporte, filaAudio;
+    VisualElement iconoFlechaDetalle;
     Label txtAviso, txtTitulo, txtSubtitulo, txtDescripcion, txtTiempo;
-    Button btnAudio, btnContinuar;
+    Button btnAudio, btnContinuar, btnToggleDetalle;
 
     AudioSource audioSource;
     GameObject modeloActual;
@@ -35,10 +36,13 @@ public class DetalleEstacionController : MonoBehaviour
 
         btnAudio     = raiz.Q<Button>("btn-audio");
         btnContinuar = raiz.Q<Button>("btn-continuar");
+        btnToggleDetalle = raiz.Q<Button>("btn-toggle-detalle");
+        iconoFlechaDetalle = raiz.Q<VisualElement>("icono-flecha-detalle");
 
         pantallaDetalle.style.display = DisplayStyle.None;
         btnAudio.clicked     += AlternarAudio;
         btnContinuar.clicked += Cerrar;
+        btnToggleDetalle.clicked += AlternarFicha;
 
         raiz.schedule.Execute(ActualizarTiempo).Every(250);
     }
@@ -53,6 +57,8 @@ public class DetalleEstacionController : MonoBehaviour
         txtTitulo.text      = titulo;
         txtSubtitulo.text   = subtitulo;
         txtDescripcion.text = ficha;
+        pantallaDetalle.RemoveFromClassList("detalle--colapsado");
+        iconoFlechaDetalle.RemoveFromClassList("detalle__flecha--arriba");
 
         // Audio (si la ruta no existe, simplemente se oculta la fila del audio)
         audioSource.Stop();
@@ -86,6 +92,21 @@ public class DetalleEstacionController : MonoBehaviour
             if (pausado) audioSource.UnPause(); else audioSource.Play();
             pausado = false;
             btnAudio.text = "Pausar";
+        }
+    }
+
+    void AlternarFicha()
+    {
+        bool estabaColapsada = pantallaDetalle.ClassListContains("detalle--colapsado");
+        if (estabaColapsada)
+        {
+            pantallaDetalle.RemoveFromClassList("detalle--colapsado");
+            iconoFlechaDetalle.RemoveFromClassList("detalle__flecha--arriba");
+        }
+        else
+        {
+            pantallaDetalle.AddToClassList("detalle--colapsado");
+            iconoFlechaDetalle.AddToClassList("detalle__flecha--arriba");
         }
     }
 

@@ -13,6 +13,27 @@
     border-top-left-radius: 70px; border-top-right-radius: 70px;
     padding: 50px 50px 60px 50px;
 }
+.detalle__toggle {
+    position: absolute; left: 50%; right: auto; bottom: 1050px;
+    width: 128px; height: 82px; margin: 0 0 0 -64px;
+    background-color: #0A5CAD; color: #FFFFFF;
+    border-width: 3px; border-color: #FFFFFF; border-radius: 42px;
+    padding: 0; justify-content: center; align-items: center;
+}
+.detalle__flecha { position: relative; width: 64px; height: 42px; }
+.detalle__flecha-trazo {
+    position: absolute; top: 17px; width: 32px; height: 9px;
+    background-color: #FFFFFF; border-radius: 5px;
+}
+.detalle__flecha-trazo--izquierdo { left: 2px; rotate: 45deg; }
+.detalle__flecha-trazo--derecho { right: 2px; rotate: -45deg; }
+.detalle__flecha--arriba { rotate: 180deg; }
+.detalle__toggle:hover { background-color: #084A88; }
+.detalle__toggle:active { background-color: #063B6D; }
+.detalle--colapsado .detalle__hoja { display: none; }
+.detalle--colapsado .detalle__toggle {
+    bottom: 220px;
+}
 .detalle__pildora   { align-self: flex-start; margin: 0 0 16px 0; }
 .detalle__subtitulo { font-size: 34px; margin: 0 0 20px 0; white-space: normal; }
 .detalle__scroll    { flex-grow: 1; flex-shrink: 1; margin-bottom: 20px; }

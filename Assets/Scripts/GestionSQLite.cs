@@ -9,10 +9,11 @@ public class GestionSQLite : MonoBehaviour
     [Header("Ficha de la estación (arrastra aquí el objeto Interfaz)")]
     public DetalleEstacionController detalle;
 
-    [Header("Cómo aparece el modelo 3D frente a la cámara")]
-    public float distanciaModelo = 1.5f;   // metros hacia adelante
-    public float alturaModelo    = 0.5f;   // metros hacia arriba (para que quede sobre la ficha)
-    public float escalaModelo    = 0.2f;
+    [Header("Anclaje del modelo 3D al suelo (Ground Plane)")]
+    public Transform escenarioSuelo;   // arrastra aquí el objeto Ground Plane Stage
+    public float escalaModelo = 0.1f;
+
+    private GameObject modeloActual;
 
     // Recibe el resultado de la consulta. Los nombres coinciden con las columnas de la tabla.
     // [Preserve] evita que el build de Android borre estas propiedades (SQLite-net las usa por reflexión).
@@ -156,28 +157,32 @@ public class GestionSQLite : MonoBehaviour
 
             Debug.Log("¡QR Válido! Mostrando ficha e instanciando modelo.");
 
-            // Modelo 3D frente a la cámara
+            // Modelo 3D anclado al suelo (hijo del Ground Plane Stage)
             GameObject modelo = null;
             GameObject modeloCargado = Resources.Load<GameObject>(rutaPrefab);
             if (modeloCargado != null)
             {
-                // Si la cámara no tiene el tag MainCamera, usamos la primera cámara que exista
-                Camera camara = Camera.main;
-                if (camara == null) camara = FindFirstObjectByType<Camera>();
-
-                if (camara != null)
+                // Si no se arrastró en el Inspector, se busca el escenario por su nombre
+                if (escenarioSuelo == null)
                 {
-                    Vector3 posicionModelo = camara.transform.position + camara.transform.forward * distanciaModelo;
-                    posicionModelo.y += alturaModelo;
-                    
-                    modelo = Instantiate(modeloCargado);
-                    modelo.transform.position = posicionModelo;
+                    GameObject objetoEscenario = GameObject.Find("Ground Plane Stage");
+                    if (objetoEscenario != null) escenarioSuelo = objetoEscenario.transform;
+                }
+
+                if (escenarioSuelo != null)
+                {
+                    // Si ya había un modelo de un escaneo anterior, se elimina
+                    if (modeloActual != null) Destroy(modeloActual);
+
+                    modelo = Instantiate(modeloCargado, escenarioSuelo);
+                    modelo.transform.localPosition = Vector3.zero;
+                    modelo.transform.localRotation = Quaternion.identity;
                     modelo.transform.localScale = Vector3.one * escalaModelo;
-                    modelo.AddComponent<InteraccionModeloAR>();
+                    modeloActual = modelo;
                 }
                 else
                 {
-                    Debug.LogWarning("[DIAG] No se encontró ninguna cámara para ubicar el modelo.");
+                    Debug.LogWarning("[DIAG] No se encontró el Ground Plane Stage. Arrástralo al campo 'Escenario Suelo'.");
                 }
             }
             else

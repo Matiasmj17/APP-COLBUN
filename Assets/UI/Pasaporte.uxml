@@ -122,7 +122,7 @@
     </ui:VisualElement>
     <ui:VisualElement name="pantalla-detalle" class="pantalla detalle" style="display: none;">
         <ui:Label name="TXT_Aviso" text="Estación escaneada correctamente" class="detalle__aviso" />
-        <ui:VisualElement class="detalle__hoja">
+        <ui:VisualElement name="ficha" class="detalle__hoja">
             <ui:Label text="ESTACIÓN DESCUBIERTA" class="pildora pildora--verde detalle__pildora" />
             <ui:Label name="TXT_Titulo" text="Título de la estación" class="titulo-grande" />
             <ui:Label name="TXT_Subtitulo" text="Descripción corta" class="texto-azul texto-negrita detalle__subtitulo" />

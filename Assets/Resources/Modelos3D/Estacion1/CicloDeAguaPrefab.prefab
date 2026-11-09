@@ -2322,7 +2322,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3409746670334476105}
   - component: {fileID: 6267245833209297953}
-  - component: {fileID: 7627077189612161294}
   m_Layer: 0
   m_Name: CicloDeAguaPrefab
   m_TagString: Untagged
@@ -2368,23 +2367,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &7627077189612161294
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4081286692284385048}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 751409f4234eb394e8afdd5d3827e01a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteraccionModeloAR
-  velocidadGiro: 0.25
-  velocidadMovimiento: 0.002
-  escalaMinima: 0.001
-  escalaMaxima: 0.02
-  sensibilidadZoom: 0.005
 --- !u!1 &4241611660895751731
 GameObject:
   m_ObjectHideFlags: 0

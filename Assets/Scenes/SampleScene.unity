@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GestorSQLite
   detalle: {fileID: 1254469390}
-  escalaModelo: 1
+  escalaModelo: 5
 --- !u!4 &462712256
 Transform:
   m_ObjectHideFlags: 0

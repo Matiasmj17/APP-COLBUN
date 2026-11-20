@@ -27,7 +27,12 @@ public class NavegacionController : MonoBehaviour
         pantallaKiba.style.display     = DisplayStyle.None;
 
         btnPasaporte.clicked += () => Mostrar(pantallaPasaporte);
-        btnKiba.clicked      += () => Mostrar(pantallaKiba);
+        btnKiba.clicked += () =>
+        {
+            var quibar = GetComponent<QuibarController>();
+            if (quibar != null && quibar.EstaBloqueado()) quibar.MostrarPista();
+            else Mostrar(pantallaKiba);
+        };
         btnEncuesta.clicked  += () => Mostrar(pantallaEncuesta);
         // El visor lo abre PasaporteController; aquí solo tapamos lo que haya debajo
         btnCamara.clicked    += () =>

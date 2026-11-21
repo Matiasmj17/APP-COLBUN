@@ -97,6 +97,7 @@ public class DetalleEstacionController : MonoBehaviour
 
     void AlternarFicha()
     {
+        Debug.Log("[DETALLE] AlternarFicha pulsado");
         bool estabaColapsada = pantallaDetalle.ClassListContains("detalle--colapsado");
         if (estabaColapsada)
         {
@@ -135,16 +136,27 @@ public class DetalleEstacionController : MonoBehaviour
 
     void Cerrar()
     {
-        audioSource.Stop();
-        pausado = false;
-        DestruirModelo();
-        if (GestionSQLite.Instancia != null) GestionSQLite.Instancia.LimpiarModeloColocado();
-        if (PasaporteController.Instancia != null)
-            PasaporteController.Instancia.ConfirmarEstacionDescubierta(codigoEstacionActual);
-        if (ControladorCamaraAR.Instancia != null) ControladorCamaraAR.Instancia.DesactivarCamaraAR();
-        pantallaDetalle.style.display   = DisplayStyle.None;
-        pantallaPasaporte.style.display = DisplayStyle.Flex;
-        codigoEstacionActual = null;
+        Debug.Log("[DETALLE] Cerrar pulsado. codigoEstacionActual: " + codigoEstacionActual);
+        try
+        {
+            if (audioSource != null) audioSource.Stop();
+            pausado = false;
+            DestruirModelo();
+            if (GestionSQLite.Instancia != null) GestionSQLite.Instancia.LimpiarModeloColocado();
+            if (PasaporteController.Instancia != null)
+                PasaporteController.Instancia.ConfirmarEstacionDescubierta(codigoEstacionActual);
+            if (ControladorCamaraAR.Instancia != null) ControladorCamaraAR.Instancia.DesactivarCamaraAR();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError("[DETALLE] Excepción durante Cerrar: " + ex);
+        }
+        finally
+        {
+            if (pantallaDetalle != null) pantallaDetalle.style.display = DisplayStyle.None;
+            if (pantallaPasaporte != null) pantallaPasaporte.style.display = DisplayStyle.Flex;
+            codigoEstacionActual = null;
+        }
     }
 
     void DestruirModelo()

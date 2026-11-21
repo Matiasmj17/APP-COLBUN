@@ -139,9 +139,9 @@
             <ui:Button name="btn-continuar" text="Continuar recorrido" class="boton-escanear detalle__continuar" />
         </ui:VisualElement>
         <ui:Button name="btn-toggle-detalle" class="detalle__toggle">
-            <ui:VisualElement name="icono-flecha-detalle" class="detalle__flecha">
-                <ui:VisualElement class="detalle__flecha-trazo detalle__flecha-trazo--izquierdo" />
-                <ui:VisualElement class="detalle__flecha-trazo detalle__flecha-trazo--derecho" />
+            <ui:VisualElement name="icono-flecha-detalle" picking-mode="Ignore" class="detalle__flecha">
+                <ui:VisualElement picking-mode="Ignore" class="detalle__flecha-trazo detalle__flecha-trazo--izquierdo" />
+                <ui:VisualElement picking-mode="Ignore" class="detalle__flecha-trazo detalle__flecha-trazo--derecho" />
             </ui:VisualElement>
         </ui:Button>
     </ui:VisualElement>

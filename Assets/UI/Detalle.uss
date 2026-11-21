@@ -35,8 +35,9 @@
     bottom: 220px;
 }
 .detalle__pildora   { align-self: flex-start; margin: 0 0 16px 0; }
+#TXT_Titulo         { font-size: 46px; white-space: normal; margin: 0 0 10px 0; }
 .detalle__subtitulo { font-size: 34px; margin: 0 0 20px 0; white-space: normal; }
-.detalle__scroll    { flex-grow: 1; flex-shrink: 1; margin-bottom: 20px; }
+.detalle__scroll    { flex-grow: 1; flex-shrink: 1; min-height: 0; margin-bottom: 20px; }
 .detalle__ficha     { font-size: 34px; color: #334155; white-space: normal; }
 
 .detalle__audio {

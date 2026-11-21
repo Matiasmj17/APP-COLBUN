@@ -209,7 +209,24 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
                          'Estación 4: Los Peces de la Cuenca del Biobío', 
                          'QR_BIOBIO_04', 
                          'Biodiversidad y especies endémicas de la cuenca del río Biobío.', 
-                         'Información de la estación próximamente disponible.', 
+                         'La cuenca del Biobío es hogar de peces nativos, varios exclusivos de Chile y de tamaño muy pequeño. Muchos están amenazados.
+
+                            Peces nativos
+                            • Bagrecito (Bullockia maldonadoi): 7 cm. Vive en ríos andinos del centro y sur de Chile. En peligro de extinción.
+                            • Tollo de agua dulce (Diplomystes nahuelbutaensis): 7 cm. Habita sectores caudalosos y profundos de ríos entre el Maule y la Araucanía. En peligro de extinción.
+                            • Carmelita de Concepción (Percilia irwini): 7 cm. También llamada coloradita. Vive en ríos y lagos de la región del Biobío, desplazándose sobre las piedras. En peligro de extinción.
+                            • Bagre chico (Trichomycterus areolatus): 15 cm. Conocido como pez gato o bagre de centro, tiene amplia distribución en Chile. Vive bajo piedras en aguas calmas y litoral arenoso. Vulnerable.
+                            • Pejerrey chileno (Basilichthys australis): 30 cm. Prefiere aguas oxigenadas de baja velocidad. Casi amenazado.
+                            • Perca trucha (Percichthys trucha): 35 cm. Vive en lagos y zonas bajas de los ríos. Preocupación menor.
+                            • Puye (Galaxias maculatus): 5 cm. Abunda en esteros poco profundos con hojas y ramas. Preocupación menor.
+
+                            Peces introducidos
+                            • Trucha arcoíris (Oncorhynchus mykiss): hasta 60 cm. Conocida como cabeza de acero, vive en ríos, arroyos y lagos de aguas frías y transparentes.
+                            • Trucha fario (Salmo trutta fario): hasta 100 cm. Es la trucha café, de las zonas altas de los ríos donde el agua es limpia y oxigenada.
+
+                            Las especies introducidas pueden desplazar a los peces nativos.
+
+                            Estado de conservación según el Ministerio del Medio Ambiente (2013).', 
                          'Modelos3D/Audios/Estacion4', 
                          'BiobioPrefab', 
                          'Modelos3D/Estacion4/BiobioPrefab', 
@@ -221,7 +238,11 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
                          'Estación 5: La Energía del Agua, un Río de Vida', 
                          'QR_ENERGIA_05', 
                          'Aprovechamiento hidroeléctrico, sustentabilidad y desarrollo.', 
-                         'Información de la estación próximamente disponible.', 
+                         'El agua de un río no solo mueve turbinas: también sostiene la vida a su alrededor. Un río limpio y con caudal estable alimenta a peces, aves acuáticas y mamíferos como el zorro, que baja a beber a sus orillas.
+
+                            La energía hidroeléctrica aprovecha el flujo del agua para generar electricidad sin quemar combustibles, por eso es una fuente renovable. Pero su desarrollo debe cuidar el río: mantener un caudal ecológico y permitir que la fauna se siga moviendo y reproduciendo.
+
+                            Esta estación muestra ese equilibrio: producir energía y proteger la vida que depende del río.', 
                          'Modelos3D/Audios/Estacion5', 
                          'EnergiaAguaPrefab', 
                          'Modelos3D/Estacion5/EnergiaAguaPrefab', 

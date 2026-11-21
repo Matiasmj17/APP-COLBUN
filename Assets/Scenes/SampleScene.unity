@@ -787,10 +787,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec1755dfde4c5e4409247362c2cfaed3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuibarController
-  imagenQuibar: {fileID: 2800000, guid: b2e6c36aa266c1d48a99497357143b55, type: 3}
-  estacionesConContenido: 01000000i
+  imagenQuibar: {fileID: 2800000, guid: 3f7291909f473f64d9f5add55a4765b6, type: 3}
+  imagenTrofeo: {fileID: 2800000, guid: 8a50b99c7b256724bb49b759d341a771, type: 3}
+  estacionesConContenido: 0100000002000000030000000400000005000000i
   alturaQuibar: 0
-  separacion: 0.1
+  separacion: 0.8
 --- !u!1 &1323550131
 GameObject:
   m_ObjectHideFlags: 0

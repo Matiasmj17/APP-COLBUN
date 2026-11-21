@@ -9,8 +9,11 @@ using UnityEngine.UIElements;
 [RequireComponent(typeof(UIDocument))]
 public class QuibarController : MonoBehaviour
 {
-    [Header("Arrastra aquí la imagen de Quibar (quibar2, con fondo transparente)")]
+    [Header("Quibar escondido (quibar_new): sale junto al modelo AR y en la pista del candado")]
     public Texture2D imagenQuibar;
+
+    [Header("Quibar con el trofeo (Zorro_y_cuadrado_celebran_juntos): pantalla del trofeo")]
+    public Texture2D imagenTrofeo;
 
     [Header("Estaciones que ya tienen contenido (1 a 5). Quibar se esconde en una de ellas")]
     public int[] estacionesConContenido = { 1 };
@@ -37,8 +40,11 @@ public class QuibarController : MonoBehaviour
     Renderer[] renderersModelo;
     Camera cam;
     VisualElement panelAR;
-    float altoAR;
-    bool teniaModelo, primerPosicionado;
+    SpriteRenderer srAR;
+    float altoAR, inicioEspera;
+    bool teniaModelo, colocado, atrapado;
+    Vector3 posLocalBase;
+    const float EsperaModelo = 2.5f;      // segundos esperando que Vuforia coloque el modelo en el piso
 
     public bool EstaBloqueado() { return PlayerPrefs.GetInt(ClaveEncontrado, 0) == 0; }
 
@@ -136,9 +142,11 @@ public class QuibarController : MonoBehaviour
         quibarAR = new GameObject("QuibarAR");
         spriteAR = Sprite.Create(imagenQuibar, new Rect(0, 0, imagenQuibar.width, imagenQuibar.height),
                                  new Vector2(0.5f, 0.5f), imagenQuibar.height);
-        quibarAR.AddComponent<SpriteRenderer>().sprite = spriteAR;
+        srAR = quibarAR.AddComponent<SpriteRenderer>();
+        srAR.sprite = spriteAR;
+        inicioEspera = Time.time;
         quibarAR.transform.localScale = Vector3.one * altoAR;
-        primerPosicionado = false;
+        colocado = false; atrapado = false;
 
         // Botones flotantes que siguen a Quibar en pantalla
         panelAR = new VisualElement();
@@ -160,6 +168,7 @@ public class QuibarController : MonoBehaviour
         ActualizarBoton();
         ConstruirTrofeo();
 
+        atrapado = true;
         if (panelAR == null) return;
         panelAR.Clear();
         panelAR.Add(Etiqueta("¡Atrapaste a Quibar!"));
@@ -176,7 +185,7 @@ public class QuibarController : MonoBehaviour
         if (pantallaQuibar != null) pantallaQuibar.style.display = DisplayStyle.Flex;
     }
 
-    // ---------- Quibar en AR: posición y seguimiento ----------
+    // ---------- Quibar en AR: posición fija y botones ----------
     void LateUpdate()
     {
         if (quibarAR == null) return;
@@ -185,56 +194,117 @@ public class QuibarController : MonoBehaviour
         bool fichaCerrada = pantallaDetalle != null && pantallaDetalle.style.display.value == DisplayStyle.None;
         if ((teniaModelo && modeloAnclaje == null) || fichaCerrada || cam == null) { LimpiarAR(); return; }
 
-        // Dirección "derecha" de la cámara, sin inclinación
+        // El modelo se coloca en el piso un poco después de mostrar la ficha: cuando aparezca, Quibar queda fijo a su lado
+        if (!teniaModelo && detalle != null && detalle.ModeloActual != null) AdoptarModelo(detalle.ModeloActual);
+
+        // Mientras se espera el modelo, Quibar no se muestra (si tarda mucho, queda fijo frente a la cámara)
+        bool esperando = !teniaModelo && Time.time - inicioEspera < EsperaModelo;
+        bool visible = !esperando && (!teniaModelo || ModeloVisible());
+        if (srAR != null) srAR.enabled = visible;
+
+        if (!esperando && !colocado) ColocarSprite();                          // se calcula UNA sola vez
+
+        if (colocado)
+        {
+            // La posición no cambia (va pegado al ancla del piso, igual que el modelo). Solo gira para mirar a la cámara.
+            var tr = quibarAR.transform;
+            tr.localPosition = posLocalBase + Vector3.up * (Mathf.Sin(Time.time * 2f) * altoAR * 0.03f);   // flotadito suave
+            Vector3 adelante = cam.transform.forward; adelante.y = 0f;
+            if (adelante.sqrMagnitude > 0.001f) tr.rotation = Quaternion.LookRotation(adelante.normalized, Vector3.up);
+        }
+
+        PosicionarPanelAR(visible && colocado);
+    }
+
+    // Calcula el lugar de Quibar una sola vez: al costado del modelo (o frente a la cámara si no hay modelo)
+    void ColocarSprite()
+    {
         Vector3 derecha = cam.transform.right; derecha.y = 0f;
         derecha = derecha.sqrMagnitude < 0.001f ? Vector3.right : derecha.normalized;
         Vector3 adelante = cam.transform.forward; adelante.y = 0f;
         adelante = adelante.sqrMagnitude < 0.001f ? Vector3.forward : adelante.normalized;
 
-        // Posición objetivo: al costado del modelo (o frente a la cámara si no hay modelo)
-        Vector3 objetivo;
+        Vector3 pos;
         Bounds b;
-        if (TieneBounds(out b))
+        if (teniaModelo && TieneBounds(out b))
         {
             float radio = Mathf.Max(b.extents.x, b.extents.z);
-            objetivo = b.center + derecha * (radio + separacion + altoAR * 0.4f);
-            objetivo.y = b.min.y + altoAR * 0.5f;
+            pos = b.center + derecha * (radio + separacion + altoAR * 0.4f);
+            pos.y = b.min.y + altoAR * 0.5f;
         }
         else if (teniaModelo)
         {
-            objetivo = modeloAnclaje.transform.position + derecha * (0.3f + separacion);
-            objetivo.y += altoAR * 0.5f;
+            pos = modeloAnclaje.transform.position + derecha * (0.3f + separacion);
+            pos.y += altoAR * 0.5f;
         }
         else
         {
-            objetivo = cam.transform.position + adelante * 1.5f + derecha * 0.4f;
-            objetivo.y = cam.transform.position.y - 0.4f;
+            pos = cam.transform.position + adelante * 1.5f + derecha * 0.4f;
+            pos.y = cam.transform.position.y - 0.4f;
         }
-        objetivo.y += Mathf.Sin(Time.time * 2f) * altoAR * 0.03f;             // flotadito suave
 
         var tr = quibarAR.transform;
-        tr.position = primerPosicionado ? Vector3.Lerp(tr.position, objetivo, 1f - Mathf.Exp(-8f * Time.deltaTime)) : objetivo;
-        primerPosicionado = true;
-        tr.rotation = Quaternion.LookRotation(adelante, Vector3.up);          // siempre mirando a la cámara
-
-        PosicionarPanelAR();
+        tr.SetParent(null, true);
+        tr.position = pos;
+        if (teniaModelo) tr.SetParent(modeloAnclaje.transform, true);          // pegado al ancla: se mueve con el mundo, no con la cámara
+        posLocalBase = tr.localPosition;
+        colocado = true;
     }
 
-    void PosicionarPanelAR()
+    void PosicionarPanelAR(bool spriteVisible)
     {
         if (panelAR == null) return;
-
-        Vector3 cabeza = quibarAR.transform.position + Vector3.up * (altoAR * 0.55f);
-        bool visible = cam.WorldToViewportPoint(cabeza).z > 0f;
-        panelAR.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
-        if (!visible) return;
 
         float W = raiz.resolvedStyle.width, H = raiz.resolvedStyle.height;
         if (float.IsNaN(W) || float.IsNaN(H) || W <= 0f || H <= 0f) return;
 
-        Vector2 p = RuntimePanelUtils.CameraTransformWorldToPanel(raiz.panel, cabeza, cam);
-        panelAR.style.left   = Mathf.Clamp(p.x - AnchoPanelAR * 0.5f, 20f, Mathf.Max(20f, W - AnchoPanelAR - 20f));
-        panelAR.style.bottom = Mathf.Clamp(H - p.y + 20f, 20f, Mathf.Max(20f, H - 420f));   // los botones quedan encima de su cabeza
+        Vector3 cabeza = quibarAR.transform.position + Vector3.up * (altoAR * 0.55f);
+        Vector3 vp = cam.WorldToViewportPoint(cabeza);
+        bool enPantalla = spriteVisible && vp.z > 0f && vp.x > 0f && vp.x < 1f && vp.y > 0f && vp.y < 1f;
+
+        if (!enPantalla && !atrapado)
+        {
+            panelAR.style.display = DisplayStyle.None;                         // hay que mover la cámara para encontrarlo
+            return;
+        }
+        panelAR.style.display = DisplayStyle.Flex;
+
+        if (enPantalla)
+        {
+            Vector2 p = RuntimePanelUtils.CameraTransformWorldToPanel(raiz.panel, cabeza, cam);
+            panelAR.style.left   = Mathf.Clamp(p.x - AnchoPanelAR * 0.5f, 20f, Mathf.Max(20f, W - AnchoPanelAR - 20f));
+            panelAR.style.bottom = Mathf.Clamp(H - p.y + 20f, 20f, Mathf.Max(20f, H - 420f));
+        }
+        else
+        {
+            // Ya lo atrapó pero Quibar salió de cuadro: los botones se quedan fijos en pantalla para poder continuar
+            panelAR.style.left   = (W - AnchoPanelAR) * 0.5f;
+            panelAR.style.bottom = H * 0.5f;
+        }
+    }
+
+    void AdoptarModelo(GameObject modelo)
+    {
+        modeloAnclaje = modelo;
+        teniaModelo = true;
+        renderersModelo = modelo.GetComponentsInChildren<Renderer>();
+        Bounds b;
+        if (alturaQuibar <= 0f && TieneBounds(out b))
+        {
+            altoAR = Mathf.Clamp(b.size.y * 0.6f, 0.15f, 0.6f);
+            quibarAR.transform.SetParent(null, true);
+            quibarAR.transform.localScale = Vector3.one * altoAR;
+        }
+        colocado = false;                                                      // se recoloca junto al modelo
+    }
+
+    // Si Vuforia pierde el seguimiento oculta el modelo; Quibar se oculta con él
+    bool ModeloVisible()
+    {
+        if (renderersModelo == null) return true;
+        foreach (var r in renderersModelo)
+            if (r != null && r.enabled) return true;
+        return false;
     }
 
     bool TieneBounds(out Bounds b)
@@ -259,7 +329,8 @@ public class QuibarController : MonoBehaviour
         quibarAR = null;
         if (spriteAR != null) Destroy(spriteAR);
         spriteAR = null;
-        modeloAnclaje = null; renderersModelo = null; teniaModelo = false;
+        modeloAnclaje = null; renderersModelo = null; teniaModelo = false; srAR = null;
+        colocado = false; atrapado = false;
     }
 
     // ---------- Pantalla del trofeo (pestaña Quibar) ----------
@@ -284,14 +355,19 @@ public class QuibarController : MonoBehaviour
         etiqueta.style.marginBottom = 40;
         cont.Add(etiqueta);
 
-        var marco = new VisualElement();                                      // círculo dorado tipo trofeo
-        marco.style.width = 560; marco.style.height = 560;
-        Radio(marco, 280);
+        var marco = new VisualElement();                                      // tarjeta con borde dorado tipo trofeo
+        marco.style.width = Length.Percent(100);
+        marco.style.height = 640;
+        Radio(marco, 70);
         Borde(marco, 14, Hex("#F5B301"));
         marco.style.backgroundColor = Hex("#FFF7E0");
+        marco.style.overflow = Overflow.Hidden;
         marco.style.alignItems = Align.Center;
         marco.style.justifyContent = Justify.Center;
-        marco.Add(Imagen(470, 1f));
+        var fotoTrofeo = new Image { image = imagenTrofeo != null ? imagenTrofeo : imagenQuibar, scaleMode = ScaleMode.ScaleToFit };
+        fotoTrofeo.style.width = Length.Percent(94);
+        fotoTrofeo.style.height = Length.Percent(94);
+        marco.Add(fotoTrofeo);
         cont.Add(marco);
 
         var titulo = Texto("¡Encontraste a Quibar!", 60, "#0B2540", true);

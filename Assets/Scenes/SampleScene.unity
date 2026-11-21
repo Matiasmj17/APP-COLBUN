@@ -292,7 +292,7 @@ GameObject:
   - component: {fileID: 960804234}
   - component: {fileID: 960804231}
   - component: {fileID: 960804233}
-  - component: {fileID: 960804232}
+  - component: {fileID: 960804235}
   m_Layer: 0
   m_Name: Ground Plane Stage
   m_TagString: Untagged
@@ -320,24 +320,7 @@ MonoBehaviour:
   mSelectedStageType: 0
   mPlaneReference: {fileID: 0}
   mMidAirReference: {fileID: 0}
-  mPreview: {fileID: 960804232}
---- !u!114 &960804232
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 960804230}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1308684972, guid: 8a9a760f95896c34689febc965510927, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Vuforia.Unity.Engine.dll::Vuforia.AnchorPreview
-  mObserverBehaviour: {fileID: 960804231}
-  mHiddenRoot: {fileID: 0}
-  mTargetName: 
-  mDatasetName: 
-  mCastedBehaviour: {fileID: 960804231}
+  mPreview: {fileID: 960804235}
 --- !u!114 &960804233
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -397,6 +380,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &960804235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 960804230}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1308684972, guid: 8a9a760f95896c34689febc965510927, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vuforia.Unity.Engine.dll::Vuforia.AnchorPreview
+  mObserverBehaviour: {fileID: 960804231}
+  mHiddenRoot: {fileID: 0}
+  mTargetName: 
+  mDatasetName: 
+  mCastedBehaviour: {fileID: 960804231}
 --- !u!1 &1075000274
 GameObject:
   m_ObjectHideFlags: 0
@@ -583,6 +583,7 @@ GameObject:
   - component: {fileID: 1254469389}
   - component: {fileID: 1254469391}
   - component: {fileID: 1254469390}
+  - component: {fileID: 1254469392}
   m_Layer: 0
   m_Name: Interfaz
   m_TagString: Untagged
@@ -774,6 +775,20 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1254469392
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1254469384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec1755dfde4c5e4409247362c2cfaed3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuibarController
+  imagenQuibar: {fileID: 2800000, guid: b2e6c36aa266c1d48a99497357143b55, type: 3}
+  estacionesConContenido: 01000000i
 --- !u!1 &1323550131
 GameObject:
   m_ObjectHideFlags: 0

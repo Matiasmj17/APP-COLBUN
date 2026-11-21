@@ -17,6 +17,8 @@ public class DetalleEstacionController : MonoBehaviour
     string codigoEstacionActual;
     bool pausado;
 
+    public GameObject ModeloActual { get { return modeloActual; } }   // NUEVO: lo usa QuibarController
+
     void OnEnable()
     {
         var raiz = GetComponent<UIDocument>().rootVisualElement;
@@ -76,6 +78,14 @@ public class DetalleEstacionController : MonoBehaviour
         // Mensaje de "estación escaneada" que se esconde a los 3 segundos
         txtAviso.style.display = DisplayStyle.Flex;
         txtAviso.schedule.Execute(() => txtAviso.style.display = DisplayStyle.None).StartingIn(3000);
+
+        // ---- NUEVO: avisa a Quibar qué estación se abrió ----
+        var quibar = GetComponent<QuibarController>();
+        if (quibar != null)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(titulo ?? "", @"Estaci[oó]n\s+(\d+)");
+            if (m.Success) quibar.AlMostrarEstacion(int.Parse(m.Groups[1].Value));
+        }
     }
 
     void AlternarAudio()
@@ -133,7 +143,7 @@ public class DetalleEstacionController : MonoBehaviour
         modeloActual = modelo;
     }
 
-    void Cerrar()
+    public void Cerrar()
     {
         audioSource.Stop();
         pausado = false;

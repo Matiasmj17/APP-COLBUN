@@ -149,7 +149,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GestorSQLite
   detalle: {fileID: 1254469390}
-  escalaModelo: 5
+  tamanoObjetivoMetros: 0.8
+  alturaFlotando: 0.85
+  acercarHaciaCamara: 0.25
 --- !u!4 &462712256
 Transform:
   m_ObjectHideFlags: 0

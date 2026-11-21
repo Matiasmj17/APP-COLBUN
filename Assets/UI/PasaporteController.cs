@@ -1,4 +1,4 @@
-using System.Collections.Generic;            // Para usar List<>
+﻿using System.Collections.Generic;            // Para usar List<>
 using UnityEngine;                           // Clases base de Unity (PlayerPrefs, Mathf, etc.)
 using UnityEngine.UIElements;                // UI Toolkit (UIDocument, Label, Button, VisualElement)
 
@@ -28,7 +28,7 @@ public class PasaporteController : MonoBehaviour
     {
         new Estacion { numero = 1, titulo = "Agua y Energía",        descripcion = "Transformación cinética y aprovechamiento hídrico", codigoQR = "QR_AGUA_01" },
         new Estacion { numero = 2, titulo = "Flora Nativa",          descripcion = "Quillay, Peumo y Espino",                          codigoQR = "ANGOSTURA-EST2" },
-        new Estacion { numero = 3, titulo = "Fauna del Maule",       descripcion = "Aproximándote al punto de observación",            codigoQR = "ANGOSTURA-EST3" },
+        new Estacion { numero = 3, titulo = "Los Peces",             descripcion = "Anatomía y clasificación de peces de agua dulce",  codigoQR = "QR_PECES_03" },
         new Estacion { numero = 4, titulo = "Aves de Ribera",        descripcion = "Humedales y biodiversidad ribereña",               codigoQR = "ANGOSTURA-EST4" },
         new Estacion { numero = 5, titulo = "Historia & Patrimonio", descripcion = "Memorias y desarrollo del Maule",                  codigoQR = "ANGOSTURA-EST5" },
     };

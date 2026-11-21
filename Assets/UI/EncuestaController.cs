@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -26,6 +26,7 @@ public class EncuestaController : MonoBehaviour
     string origen, edad;
     int nota;
     TextField comentario;
+    GestionSQLite gestorBD;
     Label mensaje;
 
     void OnEnable()

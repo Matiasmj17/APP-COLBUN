@@ -123,11 +123,22 @@ public class DetalleEstacionController : MonoBehaviour
         return (s / 60).ToString("00") + ":" + (s % 60).ToString("00");
     }
 
+    // Lo llama GestionSQLite cuando el ancla en el piso queda lista y con el modelo cargado
+    public void AsignarModeloActual(GameObject modelo)
+    {
+        if (modeloActual != null && modeloActual != modelo)
+        {
+            Destroy(modeloActual);
+        }
+        modeloActual = modelo;
+    }
+
     void Cerrar()
     {
         audioSource.Stop();
         pausado = false;
         DestruirModelo();
+        if (GestionSQLite.Instancia != null) GestionSQLite.Instancia.LimpiarModeloColocado();
         if (PasaporteController.Instancia != null)
             PasaporteController.Instancia.ConfirmarEstacionDescubierta(codigoEstacionActual);
         if (ControladorCamaraAR.Instancia != null) ControladorCamaraAR.Instancia.DesactivarCamaraAR();

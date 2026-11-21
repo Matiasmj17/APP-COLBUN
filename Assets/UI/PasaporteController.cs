@@ -26,11 +26,11 @@ public class PasaporteController : MonoBehaviour
     // Los estados NO se escriben aquí: se calculan con el progreso guardado.
     readonly List<Estacion> estaciones = new List<Estacion>
     {
-        new Estacion { numero = 1, titulo = "Agua y Energía",        descripcion = "Transformación cinética y aprovechamiento hídrico", codigoQR = "QR_AGUA_01" },
-        new Estacion { numero = 2, titulo = "Flora Nativa",          descripcion = "Quillay, Peumo y Espino",                          codigoQR = "ANGOSTURA-EST2" },
-        new Estacion { numero = 3, titulo = "Los Peces",             descripcion = "Anatomía y clasificación de peces de agua dulce",  codigoQR = "QR_PECES_03" },
-        new Estacion { numero = 4, titulo = "Aves de Ribera",        descripcion = "Humedales y biodiversidad ribereña",               codigoQR = "ANGOSTURA-EST4" },
-        new Estacion { numero = 5, titulo = "Historia & Patrimonio", descripcion = "Memorias y desarrollo del Maule",                  codigoQR = "ANGOSTURA-EST5" },
+        new Estacion { numero = 1, titulo = "El Ciclo del Agua",     descripcion = "El origen de la vida y transformación del agua",    codigoQR = "QR_AGUA_01" },
+        new Estacion { numero = 2, titulo = "Origen de la Vida",     descripcion = "De los organismos marinos a los seres terrestres",   codigoQR = "QR_VIDA_02" },
+        new Estacion { numero = 3, titulo = "Los Peces",             descripcion = "Anatomía y clasificación de peces de agua dulce",    codigoQR = "QR_PECES_03" },
+        new Estacion { numero = 4, titulo = "Peces del Biobío",      descripcion = "Los peces de la cuenca del Biobío",                  codigoQR = "QR_BIOBIO_04" },
+        new Estacion { numero = 5, titulo = "Energía del Agua",      descripcion = "La energía del agua, un río de vida",                codigoQR = "QR_ENERGIA_05" },
     };
 
     VisualElement raiz;                      // Raíz del árbol UXML (la guardamos para refrescar la UI)

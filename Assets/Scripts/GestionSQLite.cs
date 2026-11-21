@@ -159,6 +159,35 @@ public class GestionSQLite : MonoBehaviour
 
             db.Execute(@"INSERT OR REPLACE INTO ESTACION 
                          (id_estacion, nombre_estacion, codigo_qr, descripcion, ficha_informativa, recursos_multimedia, nombre_modelo, prefab, formato) 
+                         VALUES (2, 
+                         'Estación 2: El Agua, Origen de la Vida', 
+                         'QR_VIDA_02', 
+                         'De los primeros organismos marinos a los vertebrados terrestres.', 
+                         'Hace cuatro mil millones de años se originó la vida en el mar.
+
+De los peces a la tierra firme:
+Los primeros vertebrados fueron los peces. Al surgir los continentes, algunos emigraron a la tierra adaptándose a su nuevo medio: sus aletas lobuladas se convirtieron en patas y su cola se volvió más larga y musculosa.
+
+Así surgieron los anfibios (tetrápodos), combinando respiración pulmonar y branquial. Viven en tierra pero regresan al agua a criar. Más tarde, los reptiles dominaron la era Mesozoica; en el Jurásico surgieron las primeras aves con dientes y cola emplumada, seguidas por los mamíferos vivíparos de temperatura constante.
+
+Transición evolutiva (fósiles mar a tierra):
+Eusthenopteron -> Panderichthys -> Tiktaalik (período de transición) -> Acanthostega -> Ichthyostega.
+
+El agua en el cuerpo humano:
+Así como el 75% del planeta está cubierto por agua, el 70% de nuestro cuerpo está formado por ella:
+• Sangre: 82%
+• Cerebro y músculos: 75%
+• Huesos: 22%
+
+Funciones vitales:
+Transporta oxígeno y nutrientes a las células, transmite impulsos nerviosos, regula la temperatura corporal, amortigua las articulaciones, ayuda a convertir alimentos en energía y elimina toxinas.', 
+                         'Modelos3D/Audios/Estacion2', 
+                         'OrigenDeLaVidaPrefab', 
+                         'Modelos3D/Estacion2/OrigenDeLaVidaPrefab', 
+                         '.prefab')");
+
+            db.Execute(@"INSERT OR REPLACE INTO ESTACION 
+                         (id_estacion, nombre_estacion, codigo_qr, descripcion, ficha_informativa, recursos_multimedia, nombre_modelo, prefab, formato) 
                          VALUES (3, 
                          'Estación 3: Los Peces', 
                          'QR_PECES_03', 
@@ -172,6 +201,30 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
                          'Modelos3D/Audios/Estacion3', 
                          'LosPecesPrefab', 
                          'Modelos3D/Estacion3/LosPecesPrefab', 
+                         '.prefab')");
+
+            db.Execute(@"INSERT OR REPLACE INTO ESTACION 
+                         (id_estacion, nombre_estacion, codigo_qr, descripcion, ficha_informativa, recursos_multimedia, nombre_modelo, prefab, formato) 
+                         VALUES (4, 
+                         'Estación 4: Los Peces de la Cuenca del Biobío', 
+                         'QR_BIOBIO_04', 
+                         'Biodiversidad y especies endémicas de la cuenca del río Biobío.', 
+                         'Información de la estación próximamente disponible.', 
+                         'Modelos3D/Audios/Estacion4', 
+                         'BiobioPrefab', 
+                         'Modelos3D/Estacion4/BiobioPrefab', 
+                         '.prefab')");
+
+            db.Execute(@"INSERT OR REPLACE INTO ESTACION 
+                         (id_estacion, nombre_estacion, codigo_qr, descripcion, ficha_informativa, recursos_multimedia, nombre_modelo, prefab, formato) 
+                         VALUES (5, 
+                         'Estación 5: La Energía del Agua, un Río de Vida', 
+                         'QR_ENERGIA_05', 
+                         'Aprovechamiento hidroeléctrico, sustentabilidad y desarrollo.', 
+                         'Información de la estación próximamente disponible.', 
+                         'Modelos3D/Audios/Estacion5', 
+                         'EnergiaAguaPrefab', 
+                         'Modelos3D/Estacion5/EnergiaAguaPrefab', 
                          '.prefab')");
         }
     }
@@ -197,12 +250,18 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
             return false;
         }
 
+        string textoBuscado = textoEscaneadoPorVuforia.Trim();
+        if (textoBuscado.Equals("ANGOSTURA-EST2", System.StringComparison.OrdinalIgnoreCase)) textoBuscado = "QR_VIDA_02";
+        if (textoBuscado.Equals("ANGOSTURA-EST3", System.StringComparison.OrdinalIgnoreCase)) textoBuscado = "QR_PECES_03";
+        if (textoBuscado.Equals("ANGOSTURA-EST4", System.StringComparison.OrdinalIgnoreCase)) textoBuscado = "QR_BIOBIO_04";
+        if (textoBuscado.Equals("ANGOSTURA-EST5", System.StringComparison.OrdinalIgnoreCase)) textoBuscado = "QR_ENERGIA_05";
+
         using (var db = new SQLiteConnection(rutaDB))
         {
             var filas = db.Query<FilaEstacion>(
                 "SELECT prefab, nombre_estacion, descripcion, ficha_informativa, recursos_multimedia " +
                 "FROM ESTACION WHERE codigo_qr = ?",
-                textoEscaneadoPorVuforia);
+                textoBuscado);
 
             if (filas.Count == 0)
             {
@@ -244,7 +303,7 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
             }
 
             // Muestra la ficha de inmediato. El modelo 3D se vinculará tan pronto Vuforia detecte el piso
-            if (detalle != null) detalle.Mostrar(nombre, descripcion, ficha, rutaAudio, null, textoEscaneadoPorVuforia);
+            if (detalle != null) detalle.Mostrar(nombre, descripcion, ficha, rutaAudio, null, textoBuscado);
             else Debug.LogWarning("Falta arrastrar el objeto Interfaz en el campo 'Detalle' de GestionSQLite.");
             return detalle != null;
         }

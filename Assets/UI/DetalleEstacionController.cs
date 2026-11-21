@@ -17,6 +17,8 @@ public class DetalleEstacionController : MonoBehaviour
     string codigoEstacionActual;
     bool pausado;
 
+    public GameObject ModeloActual { get { return modeloActual; } }   // NUEVO: lo usa QuibarController
+
     void OnEnable()
     {
         var raiz = GetComponent<UIDocument>().rootVisualElement;

@@ -15,6 +15,12 @@ public class QuibarController : MonoBehaviour
     [Header("Estaciones que ya tienen contenido (1 a 5). Quibar se esconde en una de ellas")]
     public int[] estacionesConContenido = { 1 };
 
+    [Header("Quibar en AR: alto en metros (0 = automático según el tamaño del modelo)")]
+    public float alturaQuibar = 0f;
+
+    [Header("Separación entre el modelo y Quibar, en metros")]
+    public float separacion = 0.1f;
+
     const string ClaveEstacion   = "quibar_estacion";    // estación donde está escondido (se sortea una vez)
     const string ClaveEncontrado = "quibar_encontrado";  // 0 = escondido, 1 = ya lo atrapó
     const string ClaveHallazgo   = "quibar_hallazgo";    // estación donde lo encontró
@@ -23,6 +29,16 @@ public class QuibarController : MonoBehaviour
     VisualElement pantallaPasaporte, pantallaEscaner, pantallaDetalle, pantallaEncuesta, pantallaQuibar;
     Button btnQuibar;
     DetalleEstacionController detalle;
+
+    // --- Quibar flotando en AR ---
+    const float AnchoPanelAR = 560f;
+    GameObject quibarAR, modeloAnclaje;
+    Sprite spriteAR;
+    Renderer[] renderersModelo;
+    Camera cam;
+    VisualElement panelAR;
+    float altoAR;
+    bool teniaModelo, primerPosicionado;
 
     public bool EstaBloqueado() { return PlayerPrefs.GetInt(ClaveEncontrado, 0) == 0; }
 
@@ -42,6 +58,8 @@ public class QuibarController : MonoBehaviour
         ActualizarBoton();
         ConstruirTrofeo();
     }
+
+    void OnDisable() { LimpiarAR(); }
 
     // ---------- Escondite ----------
     void ElegirEscondite()
@@ -98,13 +116,40 @@ public class QuibarController : MonoBehaviour
     // ---------- Aparición y captura ----------
     void MostrarAparicion(int numero)
     {
-        CerrarCapa();
-        capa = CrearCapa();
-        var t = CrearTarjeta(capa);
-        t.Add(Texto("¡Quibar está aquí!", 56, "#0B2540", true));
-        t.Add(Imagen(420, 1f));
-        t.Add(Texto("Se escondía en esta estación. ¡Atrápalo!", 36, "#475569", false));
-        t.Add(Boton("¡Atrapar!", () => Atrapar(numero)));
+        LimpiarAR();
+        if (imagenQuibar == null) { Debug.LogWarning("QuibarController: falta arrastrar la imagen de Quibar."); return; }
+
+        cam = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+        if (cam == null) return;
+
+        modeloAnclaje = detalle != null ? detalle.ModeloActual : null;
+        teniaModelo = modeloAnclaje != null;
+        renderersModelo = teniaModelo ? modeloAnclaje.GetComponentsInChildren<Renderer>() : null;
+
+        // Tamaño de Quibar: el parámetro, o ~60% del alto del modelo
+        Bounds b;
+        if (alturaQuibar > 0f) altoAR = alturaQuibar;
+        else if (TieneBounds(out b)) altoAR = Mathf.Clamp(b.size.y * 0.6f, 0.15f, 0.6f);
+        else altoAR = 0.3f;
+
+        // El "modelo" de Quibar: un sprite plano (la foto) que siempre mira a la cámara
+        quibarAR = new GameObject("QuibarAR");
+        spriteAR = Sprite.Create(imagenQuibar, new Rect(0, 0, imagenQuibar.width, imagenQuibar.height),
+                                 new Vector2(0.5f, 0.5f), imagenQuibar.height);
+        quibarAR.AddComponent<SpriteRenderer>().sprite = spriteAR;
+        quibarAR.transform.localScale = Vector3.one * altoAR;
+        primerPosicionado = false;
+
+        // Botones flotantes que siguen a Quibar en pantalla
+        panelAR = new VisualElement();
+        panelAR.pickingMode = PickingMode.Ignore;                             // solo los botones reciben toques
+        panelAR.style.position = Position.Absolute;
+        panelAR.style.width = AnchoPanelAR;
+        panelAR.style.alignItems = Align.Center;
+        raiz.Add(panelAR);
+
+        panelAR.Add(Etiqueta("¡Quibar está aquí!"));
+        panelAR.Add(Boton("¡Atrapar!", () => Atrapar(numero)));
     }
 
     void Atrapar(int numero)
@@ -115,20 +160,106 @@ public class QuibarController : MonoBehaviour
         ActualizarBoton();
         ConstruirTrofeo();
 
-        capa.Clear();
-        var t = CrearTarjeta(capa);
-        t.Add(Texto("¡Atrapaste a Quibar!", 56, "#0B2540", true));
-        t.Add(Imagen(420, 1f));
-        t.Add(Texto("Desbloqueaste la pestaña Quibar y ganaste un trofeo.", 36, "#475569", false));
-        t.Add(Boton("Ver mi trofeo", IrATrofeo));
+        if (panelAR == null) return;
+        panelAR.Clear();
+        panelAR.Add(Etiqueta("¡Atrapaste a Quibar!"));
+        panelAR.Add(Boton("Ver trofeo", IrATrofeo));
+        panelAR.Add(BotonSecundario("Seguir en la estación", LimpiarAR));
     }
 
     void IrATrofeo()
     {
+        LimpiarAR();
         CerrarCapa();
         if (detalle != null) detalle.Cerrar();                                // cierra la ficha y borra el modelo 3D
         Ocultar(pantallaPasaporte); Ocultar(pantallaEscaner); Ocultar(pantallaDetalle); Ocultar(pantallaEncuesta);
         if (pantallaQuibar != null) pantallaQuibar.style.display = DisplayStyle.Flex;
+    }
+
+    // ---------- Quibar en AR: posición y seguimiento ----------
+    void LateUpdate()
+    {
+        if (quibarAR == null) return;
+
+        // Se limpia solo si el modelo se destruyó o se cerró la ficha
+        bool fichaCerrada = pantallaDetalle != null && pantallaDetalle.style.display.value == DisplayStyle.None;
+        if ((teniaModelo && modeloAnclaje == null) || fichaCerrada || cam == null) { LimpiarAR(); return; }
+
+        // Dirección "derecha" de la cámara, sin inclinación
+        Vector3 derecha = cam.transform.right; derecha.y = 0f;
+        derecha = derecha.sqrMagnitude < 0.001f ? Vector3.right : derecha.normalized;
+        Vector3 adelante = cam.transform.forward; adelante.y = 0f;
+        adelante = adelante.sqrMagnitude < 0.001f ? Vector3.forward : adelante.normalized;
+
+        // Posición objetivo: al costado del modelo (o frente a la cámara si no hay modelo)
+        Vector3 objetivo;
+        Bounds b;
+        if (TieneBounds(out b))
+        {
+            float radio = Mathf.Max(b.extents.x, b.extents.z);
+            objetivo = b.center + derecha * (radio + separacion + altoAR * 0.4f);
+            objetivo.y = b.min.y + altoAR * 0.5f;
+        }
+        else if (teniaModelo)
+        {
+            objetivo = modeloAnclaje.transform.position + derecha * (0.3f + separacion);
+            objetivo.y += altoAR * 0.5f;
+        }
+        else
+        {
+            objetivo = cam.transform.position + adelante * 1.5f + derecha * 0.4f;
+            objetivo.y = cam.transform.position.y - 0.4f;
+        }
+        objetivo.y += Mathf.Sin(Time.time * 2f) * altoAR * 0.03f;             // flotadito suave
+
+        var tr = quibarAR.transform;
+        tr.position = primerPosicionado ? Vector3.Lerp(tr.position, objetivo, 1f - Mathf.Exp(-8f * Time.deltaTime)) : objetivo;
+        primerPosicionado = true;
+        tr.rotation = Quaternion.LookRotation(adelante, Vector3.up);          // siempre mirando a la cámara
+
+        PosicionarPanelAR();
+    }
+
+    void PosicionarPanelAR()
+    {
+        if (panelAR == null) return;
+
+        Vector3 cabeza = quibarAR.transform.position + Vector3.up * (altoAR * 0.55f);
+        bool visible = cam.WorldToViewportPoint(cabeza).z > 0f;
+        panelAR.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        if (!visible) return;
+
+        float W = raiz.resolvedStyle.width, H = raiz.resolvedStyle.height;
+        if (float.IsNaN(W) || float.IsNaN(H) || W <= 0f || H <= 0f) return;
+
+        Vector2 p = RuntimePanelUtils.CameraTransformWorldToPanel(raiz.panel, cabeza, cam);
+        panelAR.style.left   = Mathf.Clamp(p.x - AnchoPanelAR * 0.5f, 20f, Mathf.Max(20f, W - AnchoPanelAR - 20f));
+        panelAR.style.bottom = Mathf.Clamp(H - p.y + 20f, 20f, Mathf.Max(20f, H - 420f));   // los botones quedan encima de su cabeza
+    }
+
+    bool TieneBounds(out Bounds b)
+    {
+        b = default(Bounds);
+        if (renderersModelo == null) return false;
+        bool primero = true;
+        foreach (var r in renderersModelo)
+        {
+            if (r == null) continue;
+            if (primero) { b = r.bounds; primero = false; }
+            else b.Encapsulate(r.bounds);
+        }
+        return !primero;
+    }
+
+    void LimpiarAR()
+    {
+        if (panelAR != null) panelAR.RemoveFromHierarchy();
+        panelAR = null;
+        if (quibarAR != null) Destroy(quibarAR);
+        quibarAR = null;
+        if (spriteAR != null) Destroy(spriteAR);
+        spriteAR = null;
+        modeloAnclaje = null; renderersModelo = null; teniaModelo = false;
     }
 
     // ---------- Pantalla del trofeo (pestaña Quibar) ----------
@@ -177,7 +308,11 @@ public class QuibarController : MonoBehaviour
 
     // ---------- Pruebas desde el Inspector (clic derecho sobre el componente) ----------
     [ContextMenu("Probar aparición en estación 1")]
-    void ProbarAparicion() { MostrarAparicion(1); }
+    void ProbarAparicion()
+    {
+        if (pantallaDetalle != null) pantallaDetalle.style.display = DisplayStyle.Flex;
+        MostrarAparicion(1);
+    }
 
     [ContextMenu("Reiniciar Quibar")]
     void Reiniciar()
@@ -246,7 +381,7 @@ public class QuibarController : MonoBehaviour
         return i;
     }
 
-    Button Boton(string texto, Action clic)
+    Button Boton(string texto, Action clic, float fuente = 44)
     {
         var b = new Button(clic) { text = texto };
         b.style.marginTop = 30;
@@ -254,11 +389,31 @@ public class QuibarController : MonoBehaviour
         b.style.alignSelf = Align.Stretch;
         b.style.backgroundColor = Hex("#0A5CAD");
         b.style.color = Color.white;
-        b.style.fontSize = 44;
+        b.style.fontSize = fuente;
         b.style.unityFontStyleAndWeight = FontStyle.Bold;
         Radio(b, 60);
         Borde(b, 0, Color.clear);
         return b;
+    }
+
+    Button BotonSecundario(string texto, Action clic)
+    {
+        var b = Boton(texto, clic, 38);
+        b.style.backgroundColor = Color.white;
+        b.style.color = Hex("#0A5CAD");
+        Borde(b, 4, Hex("#0A5CAD"));
+        return b;
+    }
+
+    Label Etiqueta(string texto)
+    {
+        var l = Texto(texto, 40, "#0B2540", true);
+        l.pickingMode = PickingMode.Ignore;
+        l.style.backgroundColor = Color.white;
+        Radio(l, 40);
+        l.style.paddingTop = 14; l.style.paddingBottom = 14;
+        l.style.paddingLeft = 36; l.style.paddingRight = 36;
+        return l;
     }
 
     VisualElement CrearCandado()

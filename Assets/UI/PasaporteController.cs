@@ -37,6 +37,7 @@ public class PasaporteController : MonoBehaviour
     VisualElement pantallaPasaporte;         // Contenedor de la pantalla 1
     VisualElement pantallaEscaner;           // Contenedor de la pantalla 2 (cámara)
     Label lblMensaje;                        // Aviso sobre la cámara ("Código QR escaneado...")
+    Label lblMensajePasaporte;               // Aviso en pantalla de pasaporte
     IVisualElementScheduledItem tareaOcultar;// Temporizador que oculta el aviso
     VisualElement panelCodigoManual;
     Button btnMostrarCodigo, btnValidarCodigo, btnCancelarCodigo;
@@ -52,9 +53,10 @@ public class PasaporteController : MonoBehaviour
     {
         raiz = GetComponent<UIDocument>().rootVisualElement;               // Raíz del árbol UXML
 
-        pantallaPasaporte = raiz.Q<VisualElement>("pantalla-pasaporte");   // Busca por el atributo name del UXML
-        pantallaEscaner   = raiz.Q<VisualElement>("pantalla-escaner");
-        lblMensaje        = raiz.Q<Label>("lbl-mensaje");
+        pantallaPasaporte   = raiz.Q<VisualElement>("pantalla-pasaporte");   // Busca por el atributo name del UXML
+        pantallaEscaner     = raiz.Q<VisualElement>("pantalla-escaner");
+        lblMensaje          = raiz.Q<Label>("lbl-mensaje");
+        lblMensajePasaporte = raiz.Q<Label>("lbl-mensaje-pasaporte");
         panelCodigoManual = raiz.Q<VisualElement>("panel-codigo-manual");
         campoCodigo       = raiz.Q<TextField>("txt-codigo-manual");
         btnMostrarCodigo  = raiz.Q<Button>("btn-simular");
@@ -113,33 +115,26 @@ public class PasaporteController : MonoBehaviour
             return;
         }
 
-        var estacion = estaciones.Find(x => x.codigoQR == texto);   // ¿Es una estación registrada?
+        string codigoNormalizado = GestionSQLite.NormalizarCodigoQR(texto);
+        var estacion = estaciones.Find(x => x.codigoQR == codigoNormalizado);   // ¿Es una estación registrada?
         if (estacion == null)
         {
-            MostrarMensaje("QR no válido: no pertenece al sendero", true);   // Nada cambia en el pasaporte
+            MostrarMensaje("QR no pertenece al sendero", true);
             return;
         }
 
-        if (estacion.estado == Estado.Descubierta)             // Ya estaba hecha
+        // Validación de orden secuencial estricto
+        if (estacion.numero > 1 && PlayerPrefs.GetInt("estacion_" + (estacion.numero - 1), 0) == 0)
         {
-            MostrarMensaje("Ya descubriste: " + estacion.titulo, true);
+            MostrarMensaje($"¡Estación bloqueada! Primero debes completar la Estación {estacion.numero - 1}", true);
             return;
         }
 
-        if (estacion.estado == Estado.Bloqueada)               // Aún no le toca (hay que ir en orden)
-        {
-            MostrarMensaje("Estación bloqueada. Descubre primero las anteriores", true);
-            return;
-        }
-
-        // Llegó aquí: es la estación pendiente y el QR es válido -> se marca como descubierta
         PlayerPrefs.SetInt("estacion_" + estacion.numero, 1);  // Guarda el progreso en el celular
         PlayerPrefs.Save();                                    // Fuerza el guardado a disco
 
-        RefrescarTodo();                                       // Recalcula: la siguiente pasa a "Pendiente"
-        MostrarMensaje("Código QR escaneado: " + estacion.titulo + " descubierta", false);
-
-        raiz.schedule.Execute(IrAPasaporte).StartingIn(2000);  // A los 2 s vuelve al pasaporte para ver el cambio
+        RefrescarTodo();
+        MostrarMensaje("¡Estación " + estacion.numero + " descubierta: " + estacion.titulo + "!", false);
     }
 
     void MostrarEntradaCodigo()
@@ -158,29 +153,32 @@ public class PasaporteController : MonoBehaviour
 
     void ValidarCodigoManual()
     {
-        string codigo = (campoCodigo.value ?? "").Trim().ToUpperInvariant();
-        if (codigo.Length == 0)
+        string entrada = (campoCodigo.value ?? "").Trim();
+        if (entrada.Length == 0)
         {
             MostrarMensaje("Escribe el código de la estación", true);
             return;
         }
 
+        string codigo = GestionSQLite.NormalizarCodigoQR(entrada);
         Estacion estacion = estaciones.Find(x => x.codigoQR == codigo);
         if (estacion == null)
         {
-            MostrarMensaje("Código no válido", true);
+            MostrarMensaje("Código no válido (puedes escribir 1, 2, 3, 4 o 5)", true);
             return;
         }
-        if (estacion.estado == Estado.Descubierta)
+
+        // Validación de orden secuencial estricto
+        if (estacion.numero > 1 && PlayerPrefs.GetInt("estacion_" + (estacion.numero - 1), 0) == 0)
         {
-            MostrarMensaje("Esta estación ya está descubierta", true);
+            MostrarMensaje($"¡Estación bloqueada! Primero debes completar la Estación {estacion.numero - 1}", true);
             return;
         }
-        if (estacion.estado == Estado.Bloqueada)
-        {
-            MostrarMensaje("Descubre primero las estaciones anteriores", true);
-            return;
-        }
+
+        PlayerPrefs.SetInt("estacion_" + estacion.numero, 1);
+        PlayerPrefs.Save();
+        RefrescarTodo();
+
         if (gestorBD == null) gestorBD = FindAnyObjectByType<GestionSQLite>();
         if (gestorBD == null)
         {
@@ -191,13 +189,13 @@ public class PasaporteController : MonoBehaviour
         if (ControladorCamaraAR.Instancia != null)
             ControladorCamaraAR.Instancia.DetenerLecturaQR();
 
-        if (gestorBD.ProcesarEscaneoQR(codigo))
+        panelCodigoManual.style.display = DisplayStyle.None;
+        pantallaPasaporte.style.display = DisplayStyle.None;
+
+        if (!gestorBD.ProcesarEscaneoQR(codigo))
         {
-            panelCodigoManual.style.display = DisplayStyle.None;
-        }
-        else
-        {
-            MostrarMensaje("Código válido, pero todavía no está registrado en la base de datos", true);
+            MostrarMensaje("Estación válida, pero todavía no está registrada en la base de datos", true);
+            pantallaPasaporte.style.display = DisplayStyle.Flex;
             if (ControladorCamaraAR.Instancia != null)
                 ControladorCamaraAR.Instancia.ActivarCamaraAR();
         }
@@ -206,8 +204,15 @@ public class PasaporteController : MonoBehaviour
     public void ConfirmarEstacionDescubierta(string codigo)
     {
         if (string.IsNullOrEmpty(codigo)) return;
-        Estacion estacion = estaciones.Find(x => x.codigoQR == codigo.Trim().ToUpperInvariant());
+        string codigoNormalizado = GestionSQLite.NormalizarCodigoQR(codigo);
+        Estacion estacion = estaciones.Find(x => x.codigoQR == codigoNormalizado);
         if (estacion == null) return;
+
+        // No registrar si no se ha completado la anterior
+        if (estacion.numero > 1 && PlayerPrefs.GetInt("estacion_" + (estacion.numero - 1), 0) == 0)
+        {
+            return;
+        }
 
         PlayerPrefs.SetInt("estacion_" + estacion.numero, 1);
         PlayerPrefs.Save();
@@ -218,9 +223,30 @@ public class PasaporteController : MonoBehaviour
     void ReiniciarProgreso()
     {
         foreach (var e in estaciones) PlayerPrefs.DeleteKey("estacion_" + e.numero);  // Borra lo guardado
+        PlayerPrefs.DeleteKey("encuesta_enviada");
+        PlayerPrefs.DeleteKey("quibar_encontrado");
         PlayerPrefs.Save();
         if (raiz != null) RefrescarTodo();                     // Redibuja si ya está en ejecución
     }
+
+#if UNITY_EDITOR
+    [UnityEditor.MenuItem("Colbún/Reiniciar Progreso (Volver a 0)")]
+    public static void MenuReiniciarProgreso()
+    {
+        for (int i = 1; i <= 5; i++)
+        {
+            PlayerPrefs.DeleteKey("estacion_" + i);
+        }
+        PlayerPrefs.DeleteKey("encuesta_enviada");
+        PlayerPrefs.DeleteKey("quibar_encontrado");
+        PlayerPrefs.Save();
+        Debug.Log(">> [Colbún] Progreso reiniciado a 0 exitosamente.");
+        if (Instancia != null)
+        {
+            Instancia.RefrescarTodo();
+        }
+    }
+#endif
 
     // ---------- Estados y dibujo ----------
 
@@ -248,13 +274,31 @@ public class PasaporteController : MonoBehaviour
         ActualizarProgreso();                                  // Redibuja progreso y "Próxima"
     }
 
-    void MostrarMensaje(string texto, bool esError)
+    public void MostrarMensaje(string texto, bool esError)
     {
-        lblMensaje.text = texto;                               // Escribe el mensaje
-        lblMensaje.EnableInClassList("escaner__mensaje--error", esError);   // Rojo si es error, verde si no
-        lblMensaje.style.display = DisplayStyle.Flex;          // Lo muestra
+        if (lblMensaje != null)
+        {
+            lblMensaje.text = texto;                               // Escribe el mensaje
+            lblMensaje.EnableInClassList("escaner__mensaje--error", esError);   // Rojo si es error, verde si no
+            lblMensaje.style.display = DisplayStyle.Flex;          // Lo muestra
+        }
+
+        if (lblMensajePasaporte != null)
+        {
+            lblMensajePasaporte.text = texto;
+            lblMensajePasaporte.EnableInClassList("pasaporte__mensaje--error", esError);
+            lblMensajePasaporte.style.display = DisplayStyle.Flex;
+        }
+
         tareaOcultar?.Pause();                                 // Cancela el temporizador anterior (si había)
-        tareaOcultar = lblMensaje.schedule.Execute(() => lblMensaje.style.display = DisplayStyle.None).StartingIn(2500);
+        if (raiz != null)
+        {
+            tareaOcultar = raiz.schedule.Execute(() =>
+            {
+                if (lblMensaje != null) lblMensaje.style.display = DisplayStyle.None;
+                if (lblMensajePasaporte != null) lblMensajePasaporte.style.display = DisplayStyle.None;
+            }).StartingIn(3200);
+        }
     }
 
     void ConstruirEstaciones(VisualElement contenedor)
@@ -331,6 +375,32 @@ public class PasaporteController : MonoBehaviour
             pista.AddToClassList("estacion__pista");
             tarjeta.Add(pista);
         }
+
+        // Al tocar cualquier tarjeta:
+        // - Bloqueada: muestra advertencia de que debe seguir el orden y cuál debe descubrir primero
+        // - Pendiente: lleva a la cámara de escaneo y pide escanear su QR
+        // - Descubierta: lleva a la cámara de escaneo y pide volver a escanear su QR para verla de nuevo
+        tarjeta.RegisterCallback<ClickEvent>(evt =>
+        {
+            if (e.estado == Estado.Bloqueada)
+            {
+                var primeraPendiente = estaciones.Find(x => x.estado == Estado.Pendiente);
+                string pista = primeraPendiente != null
+                    ? $"la Estación {primeraPendiente.numero} ({primeraPendiente.titulo})"
+                    : $"la Estación {e.numero - 1}";
+                MostrarMensaje($"¡Estación bloqueada! Primero debes descubrir {pista}.", true);
+            }
+            else if (e.estado == Estado.Pendiente)
+            {
+                IrAEscaner();
+                MostrarMensaje($"Apunta la cámara al código QR de la Estación {e.numero}", false);
+            }
+            else // Descubierta
+            {
+                IrAEscaner();
+                MostrarMensaje($"Para volver a ver la Estación {e.numero}, apunta la cámara a su código QR en el sendero", false);
+            }
+        });
 
         return tarjeta;
     }

@@ -27,7 +27,7 @@
                         <ui:VisualElement class="icono-trofeo"/>
                         <ui:Label name="lbl-progreso" text="2 de 5 estaciones" class="texto-fuerte"/>
                     </ui:VisualElement>
-                    <ui:Label text="Nivel: Explorador Maule" class="pildora pildora--verde"/>
+                    <ui:Label text="Nivel: Explorador Biobío" class="pildora pildora--verde"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="fila fila--entre margen-arriba">
                     <ui:Label text="Progreso del Sendero" class="texto-gris"/>
@@ -39,7 +39,7 @@
                 <ui:VisualElement class="fila fila--entre margen-arriba">
                     <ui:VisualElement class="fila">
                         <ui:VisualElement class="icono-check"/>
-                        <ui:Label name="lbl-proxima" text="Próxima: Fauna del Maule" class="texto-gris"/>
+                        <ui:Label name="lbl-proxima" text="Próxima: El Ciclo del Agua" class="texto-gris"/>
                     </ui:VisualElement>
                     <ui:Label text="+60 pts AR" class="texto-azul texto-negrita"/>
                 </ui:VisualElement>
@@ -54,8 +54,9 @@
         <ui:VisualElement picking-mode="Ignore" class="flotante">
             <ui:Button name="btn-escanear" text="Escanear QR" class="boton-escanear"/>
         </ui:VisualElement>
+        <ui:Label name="lbl-mensaje-pasaporte" picking-mode="Ignore" class="pasaporte__mensaje"/>
     </ui:VisualElement>
-    <ui:VisualElement name="pantalla-escaner" class="pantalla escaner">
+    <ui:VisualElement name="pantalla-escaner" class="pantalla escaner" style="display: none;">
         <ui:VisualElement class="escaner__cabecera">
             <ui:Button name="btn-volver" text="Volver" class="escaner__volver"/>
             <ui:Label text="VISOR AR ACTIVO" class="escaner__estado"/>
@@ -100,20 +101,20 @@
         </ui:ScrollView>
     </ui:VisualElement>
     <ui:VisualElement name="pantalla-kiba" class="pantalla pasaporte" style="display: none;">
-        <ui:Label text="Kiba" class="titulo-grande" style="margin: 80px 50px;"/>
+        <ui:Label text="Quíbar" class="titulo-grande" style="margin: 80px 50px;"/>
     </ui:VisualElement>
     <ui:VisualElement name="barra-nav" class="barra-nav">
         <ui:Button name="btn-nav-pasaporte" class="nav-btn nav-btn--activo">
             <ui:VisualElement class="nav-icono icono-pasaporte"/>
             <ui:Label text="Pasaporte" class="nav-texto"/>
         </ui:Button>
-        <ui:Button name="btn-nav-camara" class="nav-btn nav-btn-camara">
+        <ui:Button name="btn-nav-camara" class="nav-btn">
             <ui:VisualElement class="nav-icono icono-camara-ar"/>
             <ui:Label text="Cámara AR" class="nav-texto"/>
         </ui:Button>
         <ui:Button name="btn-nav-kiba" class="nav-btn">
             <ui:VisualElement class="nav-icono icono-klba"/>
-            <ui:Label text="Kiba" class="nav-texto"/>
+            <ui:Label text="Quíbar" class="nav-texto"/>
         </ui:Button>
         <ui:Button name="btn-nav-encuesta" class="nav-btn">
             <ui:VisualElement class="nav-icono icono-encuesta"/>

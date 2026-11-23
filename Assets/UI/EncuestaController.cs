@@ -18,7 +18,7 @@ public class EncuestaController : MonoBehaviour
         public string comentario;
     }
 
-    readonly string[] origenes = { "Colbún", "Otra comuna del Maule", "Otra región de Chile", "Otro país" };
+    readonly string[] origenes = { "Santa Bárbara", "Quilaco", "Los Ángeles", "Otra comuna del Biobío", "Otra región de Chile", "Otro país" };
     readonly string[] edades   = { "Menor de 18", "18 a 29", "30 a 59", "60 o más" };
     readonly string[] notas    = { "1", "2", "3", "4", "5" };
 
@@ -28,6 +28,7 @@ public class EncuestaController : MonoBehaviour
     TextField comentario;
     GestionSQLite gestorBD;
     Label mensaje;
+    Button btnEnviar;
 
     void OnEnable()
     {
@@ -42,11 +43,24 @@ public class EncuestaController : MonoBehaviour
         if (input != null) { input.style.fontSize = 34; input.style.minHeight = 180; }
 
         mensaje = raiz.Q<Label>("lbl-encuesta-mensaje");
-        raiz.Q<Button>("btn-enviar-encuesta").clicked += Enviar;
+        btnEnviar = raiz.Q<Button>("btn-enviar-encuesta");
+        btnEnviar.clicked += Enviar;
+
+        gestorBD = FindAnyObjectByType<GestionSQLite>();
+
+        // Si ya respondió la encuesta en esta visita, deshabilitar botón
+        if (PlayerPrefs.GetInt("encuesta_enviada", 0) == 1)
+        {
+            mensaje.text = "¡Ya has respondido esta encuesta! Muchas gracias por tu opinión.";
+            btnEnviar.text = "Encuesta enviada";
+            btnEnviar.SetEnabled(false);
+        }
     }
 
     void CrearChips(VisualElement contenedor, string[] opciones, Action<string> alElegir)
     {
+        if (contenedor == null) return;
+        contenedor.Clear();
         foreach (var texto in opciones)
         {
             var chip = new Button { text = texto };
@@ -64,27 +78,64 @@ public class EncuestaController : MonoBehaviour
 
     void Enviar()
     {
+        if (PlayerPrefs.GetInt("encuesta_enviada", 0) == 1)
+        {
+            mensaje.text = "Ya has enviado tu respuesta anteriormente.";
+            return;
+        }
+
         if (origen == null || edad == null || nota == 0)
         {
             mensaje.text = "Por favor responde las 3 primeras preguntas.";
             return;
         }
 
-        var r = new Respuesta
+        string idSesion = ObtenerIdAnonimo();
+        string comentariosTexto = comentario != null ? (comentario.value ?? "") : "";
+
+        // 1. Guardar en la base de datos local SQLite (Tabla ENCUESTA_VISITANTE)
+        if (gestorBD == null) gestorBD = FindAnyObjectByType<GestionSQLite>();
+        if (gestorBD != null)
         {
-            id_sesion_anonima = ObtenerIdAnonimo(),
-            fecha = DateTime.Now.ToString("s"),
-            origen = origen,
-            edad = edad,
-            nota = nota,
-            comentario = comentario.value
-        };
+            gestorBD.GuardarEncuesta(idSesion, origen, edad, nota, comentariosTexto);
+        }
+        else
+        {
+            Debug.LogWarning("[ENCUESTA] No se encontró GestionSQLite para registrar en base de datos.");
+        }
 
-        string ruta = Path.Combine(Application.persistentDataPath, "encuestas.jsonl");
-        File.AppendAllText(ruta, JsonUtility.ToJson(r) + "\n");
-        Debug.Log("Encuesta guardada en: " + ruta);
+        // 2. Guardar también respaldo en archivo JSON local
+        try
+        {
+            var r = new Respuesta
+            {
+                id_sesion_anonima = idSesion,
+                fecha = DateTime.Now.ToString("s"),
+                origen = origen,
+                edad = edad,
+                nota = nota,
+                comentario = comentariosTexto
+            };
 
-        mensaje.text = "¡Gracias por responder!";
+            string ruta = Path.Combine(Application.persistentDataPath, "encuestas.jsonl");
+            File.AppendAllText(ruta, JsonUtility.ToJson(r) + "\n");
+            Debug.Log("[ENCUESTA] Guardada también en archivo JSON: " + ruta);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning("[ENCUESTA] Error en respaldo JSON: " + ex.Message);
+        }
+
+        // 3. Marcar como completada
+        PlayerPrefs.SetInt("encuesta_enviada", 1);
+        PlayerPrefs.Save();
+
+        mensaje.text = "¡Gracias por responder! Tu opinión ha sido guardada en la base de datos.";
+        if (btnEnviar != null)
+        {
+            btnEnviar.text = "Encuesta enviada";
+            btnEnviar.SetEnabled(false);
+        }
         Limpiar();
     }
 

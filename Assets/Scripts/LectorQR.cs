@@ -7,6 +7,8 @@ public class LectorQR : MonoBehaviour
     private BarcodeBehaviour barcode;
     private bool yaLeido = false;
     private ControladorCamaraAR controladorCamara;
+    private float tiempoReintento = 0f;
+    private string ultimoTextoRechazado = "";
 
     void Start()
     {
@@ -23,6 +25,7 @@ public class LectorQR : MonoBehaviour
         if (!controladorCamara.EscaneoQRActivo)
         {
             yaLeido = false;
+            ultimoTextoRechazado = "";
             return;
         }
 
@@ -34,10 +37,29 @@ public class LectorQR : MonoBehaviour
         string textoEscaneado = barcode.InstanceData.Text;
         if (!string.IsNullOrEmpty(textoEscaneado))
         {
+            // Si este texto fue rechazado recientemente (por ejemplo estación bloqueada), esperar antes de volver a procesarlo
+            if (textoEscaneado == ultimoTextoRechazado && Time.time < tiempoReintento)
+            {
+                return;
+            }
+
             Debug.Log("¡QR detectado por Vuforia!: " + textoEscaneado);
-            controladorCamara.DetenerLecturaQR();
-            gestorBD.ProcesarEscaneoQR(textoEscaneado);
-            yaLeido = true;   // evita que cree el modelo mil veces mientras el QR sigue a la vista
+            if (gestorBD == null) gestorBD = FindAnyObjectByType<GestionSQLite>();
+
+            bool procesado = (gestorBD != null) && gestorBD.ProcesarEscaneoQR(textoEscaneado);
+            if (procesado)
+            {
+                controladorCamara.DetenerLecturaQR();
+                yaLeido = true;   // evita que cree el modelo mil veces mientras el QR sigue a la vista
+                ultimoTextoRechazado = "";
+            }
+            else
+            {
+                // Si el QR no fue reconocido o fue bloqueado, esperar 2.5s antes de reintentar el mismo QR
+                yaLeido = false;
+                ultimoTextoRechazado = textoEscaneado;
+                tiempoReintento = Time.time + 2.5f;
+            }
         }
     }
 }

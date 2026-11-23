@@ -145,9 +145,17 @@
 .nav-btn {
     flex-grow: 1; flex-basis: 0;
     background-color: rgba(0,0,0,0); border-width: 0; margin: 0;
-    color: #475569; font-size: 28px;
+    align-items: center; 
+    justify-content: center;
 }
-.nav-btn--activo { color: #0A5CAD; -unity-font-style: bold; }
+.nav-texto {
+    color: #1A202C;
+    font-size: 26px;
+}
+.nav-btn--activo .nav-texto {
+    color: #0A5CAD;
+    -unity-font-style: bold;
+}
 
 /* ---------- Visor de cámara ---------- */
 .escaner__cabecera {
@@ -186,6 +194,15 @@
     padding: 36px; border-radius: 30px; white-space: normal;
 }
 .escaner__mensaje--error { background-color: rgba(220,38,38,0.95); }  /* rojo = QR inválido/ya hecho/bloqueado */
+
+.pasaporte__mensaje {
+    display: none;
+    position: absolute; left: 50px; right: 50px; bottom: 230px;
+    background-color: rgba(22,163,74,0.95); color: #FFFFFF;
+    font-size: 34px; -unity-font-style: bold; -unity-text-align: middle-center;
+    padding: 30px; border-radius: 30px; white-space: normal;
+}
+.pasaporte__mensaje--error { background-color: rgba(220,38,38,0.95); }
 
 .escaner__simular {
     position: absolute; left: 50px; right: 50px; bottom: 140px; height: 130px;
@@ -263,26 +280,18 @@
 .icono-encuesta { background-image: url('ICONOS/ENCUESTA.svg'); }
 .icono-klba { background-image: url('ICONOS/KIBA ICON.svg'); }
 
-.nav-btn {
-    align-items: center; 
-    justify-content: center;
-    background-color: transparent;
-    border-width: 0;
-}
-
 .nav-icono {
-    width: 35px; height: 35px;
-    min-width: 35px; min-height: 35px; 
+    width: 44px; height: 44px;
+    min-width: 44px; min-height: 44px; 
     -unity-background-scale-mode: scale-to-fit;
     flex-shrink: 0;
     align-self: center; 
-    margin-bottom: 5px;
+    margin-bottom: 6px;
+    -unity-background-image-tint-color: #1A202C;
 }
 
-.nav-btn-camara .nav-icono {
-    width: 65px; height: 65px;
-    min-width: 65px; min-height: 65px; 
-    margin-top: -15px; 
+.nav-btn--activo .nav-icono {
+    -unity-background-image-tint-color: #0A5CAD;
 }
 
 /* ---------- Forzar tamaño de íconos rebeldes ---------- */
@@ -293,11 +302,4 @@
     background-image: url('ICONOS/AMPOLLETA.svg');
     -unity-background-scale-mode: scale-to-fit;
     flex-shrink: 0;
-}
-
-/* Al juntar las dos clases, esta regla le gana a la restricción de 35px */
-.nav-icono.icono-camara-ar {
-    width: 65px; height: 65px;
-    min-width: 65px; min-height: 65px;
-    margin-top: -15px; 
 }

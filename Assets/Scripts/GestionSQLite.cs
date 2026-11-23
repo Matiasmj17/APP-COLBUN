@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using SQLite;
 using Vuforia;
@@ -263,6 +264,67 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
         }
     }
 
+    public static string NormalizarCodigoQR(string entrada)
+    {
+        if (string.IsNullOrWhiteSpace(entrada)) return "";
+        string s = entrada.Trim().ToUpperInvariant();
+
+        // 1. Detección por número (prioridad infalible: si tiene un 5, es la Estación 5 sin importar qué palabras contenga)
+        if (s.Contains("5") || s == "CINCO" || s.Contains("QUINTO") || s.Contains("QUINTA"))
+            return "QR_ENERGIA_05";
+
+        if (s.Contains("4") || s == "CUATRO" || s.Contains("CUARTO") || s.Contains("CUARTA"))
+            return "QR_BIOBIO_04";
+
+        if (s.Contains("3") || s == "TRES" || s.Contains("TERCERO") || s.Contains("TERCERA"))
+            return "QR_PECES_03";
+
+        if (s.Contains("2") || s == "DOS" || s.Contains("SEGUNDO") || s.Contains("SEGUNDA"))
+            return "QR_VIDA_02";
+
+        if (s.Contains("1") || s == "UNO" || s == "PRIMERO" || s.Contains("PRIMERA"))
+            return "QR_AGUA_01";
+
+        // 2. Detección por palabras clave (en caso de que el QR físico no contenga ningún dígito)
+        // Estación 5: Energía / Hidroeléctrica / Central / Turbinas / Sustentabilidad / Río de Vida
+        if (s.Contains("ENERG") || s.Contains("HIDRO") || s.Contains("CENTRAL") ||
+            s.Contains("TURBIN") || s.Contains("SUSTENTAB") ||
+            (s.Contains("RIO") && !s.Contains("BIO")))
+            return "QR_ENERGIA_05";
+
+        // Estación 4: Peces del Biobío
+        if (s.Contains("BIO") || s.Contains("BAGRE") || s.Contains("TOLLO") || s.Contains("CARMELITA"))
+            return "QR_BIOBIO_04";
+
+        // Estación 3: Peces
+        if (s.Contains("PECE") || s.Contains("PEZ"))
+            return "QR_PECES_03";
+
+        // Estación 2: Origen de la Vida
+        if (s.Contains("ORIGEN") || s.Contains("VIDA") || s.Contains("FOSIL") || s.Contains("EVOLUC"))
+            return "QR_VIDA_02";
+
+        // Estación 1: Ciclo del Agua
+        if (s.Contains("AGUA") || s.Contains("CICLO"))
+            return "QR_AGUA_01";
+
+        return s;
+    }
+
+    public static int ObtenerNumeroEstacion(string codigoQR)
+    {
+        string norm = NormalizarCodigoQR(codigoQR);
+        switch (norm)
+        {
+            case "QR_AGUA_01": return 1;
+            case "QR_VIDA_02": return 2;
+            case "QR_PECES_03": return 3;
+            case "QR_BIOBIO_04": return 4;
+            case "QR_ENERGIA_05": return 5;
+            default: return 0;
+        }
+    }
+
     private bool ProcesarEscaneoQRInterno(string textoEscaneadoPorVuforia)
     {
         if (string.IsNullOrWhiteSpace(textoEscaneadoPorVuforia) || textoEscaneadoPorVuforia.Length > 100)
@@ -271,11 +333,25 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
             return false;
         }
 
-        string textoBuscado = textoEscaneadoPorVuforia.Trim();
-        if (textoBuscado.Equals("ANGOSTURA-EST2", System.StringComparison.OrdinalIgnoreCase)) textoBuscado = "QR_VIDA_02";
-        if (textoBuscado.Equals("ANGOSTURA-EST3", System.StringComparison.OrdinalIgnoreCase)) textoBuscado = "QR_PECES_03";
-        if (textoBuscado.Equals("ANGOSTURA-EST4", System.StringComparison.OrdinalIgnoreCase)) textoBuscado = "QR_BIOBIO_04";
-        if (textoBuscado.Equals("ANGOSTURA-EST5", System.StringComparison.OrdinalIgnoreCase)) textoBuscado = "QR_ENERGIA_05";
+        string textoBuscado = NormalizarCodigoQR(textoEscaneadoPorVuforia);
+
+        // Control secuencial estricto del sendero (1 -> 2 -> 3 -> 4 -> 5)
+        int numEstacion = ObtenerNumeroEstacion(textoBuscado);
+        if (numEstacion > 1)
+        {
+            bool yaDescubierta = PlayerPrefs.GetInt("estacion_" + numEstacion, 0) == 1;
+            bool anteriorDescubierta = PlayerPrefs.GetInt("estacion_" + (numEstacion - 1), 0) == 1;
+
+            if (!yaDescubierta && !anteriorDescubierta)
+            {
+                Debug.LogWarning($"[DIAG] Escaneo bloqueado: Se intentó escanear Estación {numEstacion} sin haber completado la Estación {numEstacion - 1}.");
+                if (PasaporteController.Instancia != null)
+                {
+                    PasaporteController.Instancia.MostrarMensaje($"¡Estación {numEstacion} bloqueada! Primero debes escanear la Estación {numEstacion - 1}.", true);
+                }
+                return false;
+            }
+        }
 
         using (var db = new SQLiteConnection(rutaDB))
         {
@@ -286,7 +362,55 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
 
             if (filas.Count == 0)
             {
-                Debug.LogWarning("[DIAG] QR no encontrado en la BD: " + textoEscaneadoPorVuforia);
+                Debug.LogWarning("[DIAG] QR no encontrado en la BD: " + textoEscaneadoPorVuforia + " (normalizado: " + textoBuscado + "). Reintentando inserción...");
+                try
+                {
+                    InsertarEstacionesDePrueba();
+                    filas = db.Query<FilaEstacion>(
+                        "SELECT prefab, nombre_estacion, descripcion, ficha_informativa, recursos_multimedia " +
+                        "FROM ESTACION WHERE codigo_qr = ?",
+                        textoBuscado);
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogWarning("[DIAG] Excepción al reintentar inserción: " + ex.Message);
+                }
+            }
+
+            if (filas.Count == 0)
+            {
+                // Fallback directo para Estación 5 si la base de datos en el móvil no tiene el registro
+                if (textoBuscado == "QR_ENERGIA_05")
+                {
+                    if (detalle != null)
+                    {
+                        detalle.Mostrar(
+                            "Estación 5: La Energía del Agua, un Río de Vida",
+                            "Aprovechamiento hidroeléctrico, sustentabilidad y desarrollo.",
+                            "El agua de un río no solo mueve turbinas: también sostiene la vida a su alrededor. Un río limpio y con caudal estable alimenta a peces, aves acuáticas y mamíferos como el zorro, que baja a beber a sus orillas.\n\nLa energía hidroeléctrica aprovecha el flujo del agua para generar electricidad sin quemar combustibles, por eso es una fuente renovable. Pero su desarrollo debe cuidar el río: mantener un caudal ecológico y permitir que la fauna se siga moviendo y reproduciendo.\n\nEsta estación muestra ese equilibrio: producir energía y proteger la vida que depende del río.",
+                            "Modelos3D/Audios/Estacion5",
+                            null,
+                            textoBuscado);
+                        return true;
+                    }
+                }
+                // Fallback directo para Estación 4
+                if (textoBuscado == "QR_BIOBIO_04")
+                {
+                    if (detalle != null)
+                    {
+                        detalle.Mostrar(
+                            "Estación 4: Los Peces de la Cuenca del Biobío",
+                            "Biodiversidad y especies endémicas de la cuenca del río Biobío.",
+                            "La cuenca del Biobío es hogar de peces nativos, varios exclusivos de Chile y de tamaño muy pequeño. Muchos están amenazados.\n\nPeces nativos:\n• Bagrecito: En peligro de extinción.\n• Tollo de agua dulce: En peligro de extinción.\n• Carmelita de Concepción: En peligro de extinción.\n• Bagre chico: Vulnerable.\n• Pejerrey chileno: Casi amenazado.\n• Perca trucha: Preocupación menor.\n• Puye: Preocupación menor.\n\nPeces introducidos:\n• Trucha arcoíris y Trucha fario.",
+                            "Modelos3D/Audios/Estacion4",
+                            null,
+                            textoBuscado);
+                        return true;
+                    }
+                }
+
+                Debug.LogWarning("[DIAG] QR no encontrado en la BD ni en fallback: " + textoEscaneadoPorVuforia);
                 return false;
             }
 
@@ -438,10 +562,16 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
 
         if (adelanteCamara.sqrMagnitude < 0.001f) adelanteCamara = Vector3.forward;
         Quaternion rotacionVista = Quaternion.LookRotation(adelanteCamara, Vector3.up);
+        if (prefabPendiente.name.Contains("OrigenDeLaVida"))
+        {
+            // Girar 180° para que el Panel Izquierdo (caracola) quede a la izquierda del usuario
+            // y el Panel Derecho (peces y humano) quede a la derecha
+            rotacionVista *= Quaternion.Euler(0f, 180f, 0f);
+        }
         modelo.transform.rotation = rotacionVista * prefabPendiente.transform.localRotation;
         modelo.transform.localScale = prefabPendiente.transform.localScale;
 
-        // Normalizar para que ambos modelos tengan un tamaño visual similar y cómodo (~80 cm)
+        // Normalizar tamaño visual
         Renderer[] renderers = modelo.GetComponentsInChildren<Renderer>(true);
         if (renderers.Length > 0)
         {
@@ -452,9 +582,22 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
             }
 
             float mayorDimension = Mathf.Max(boundsTotal.size.x, boundsTotal.size.y, boundsTotal.size.z);
-            if (mayorDimension > 0.001f && tamanoObjetivoMetros > 0.01f)
+            float objetivoMetros = tamanoObjetivoMetros;
+            if (prefabPendiente.name.Contains("OrigenDeLaVida"))
             {
-                float factor = tamanoObjetivoMetros / mayorDimension;
+                // El mural de la estación 2 tiene 14 especies: darle 2.4 metros de ancho total
+                // para que cada animal tenga el porte real e imponente de las estaciones 1 y 3
+                objetivoMetros = 2.40f;
+            }
+            else if (prefabPendiente.name.Contains("Biobio"))
+            {
+                // Cardumen de 9 peces del Biobío: darle 1.30 metros para apreciarlos en grupo
+                objetivoMetros = 1.30f;
+            }
+
+            if (mayorDimension > 0.001f && objetivoMetros > 0.01f)
+            {
+                float factor = objetivoMetros / mayorDimension;
                 modelo.transform.localScale *= factor;
             }
 
@@ -465,12 +608,21 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
                 boundsTotal.Encapsulate(renderers[i].bounds);
             }
 
-            // Centrar horizontalmente el modelo (X y Z) respecto al ancla para que ambos modelos
-            // queden exactamente en el mismo centro visual sin importar el pivote de su archivo 3D
+            // Centrar horizontalmente el modelo (X y Z) respecto al ancla
             Vector3 centroEnAncla = anclaInstanciada.transform.InverseTransformPoint(boundsTotal.center);
             modelo.transform.localPosition -= new Vector3(centroEnAncla.x, 0f, centroEnAncla.z);
 
-            // Alinear la base del modelo y levantarlo a la altura de flotación (alturaFlotando metros sobre el piso)
+            // Alinear la base del modelo y levantarlo a la altura de flotación
+            float alturaObjetivo = alturaFlotando;
+            if (prefabPendiente.name.Contains("OrigenDeLaVida"))
+            {
+                alturaObjetivo = 1.15f; // Flotar a 1.15m (nivel del pecho/ojos) para apreciarlo de pie
+            }
+            else if (prefabPendiente.name.Contains("Biobio"))
+            {
+                alturaObjetivo = 0.90f; // Flotar a 0.90m (nivel de la cintura/pecho) como peces nadando en el agua
+            }
+
             float minimoYLocal = float.PositiveInfinity;
             foreach (Renderer renderer in renderers)
             {
@@ -497,7 +649,7 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
 
             if (!float.IsInfinity(minimoYLocal))
             {
-                float desplazamientoY = -minimoYLocal + alturaFlotando;
+                float desplazamientoY = -minimoYLocal + alturaObjetivo;
                 modelo.transform.localPosition += Vector3.up * desplazamientoY;
             }
         }
@@ -508,6 +660,12 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
             Vector3 haciaCamara = Vector3.ProjectOnPlane(cam.transform.position - anclaInstanciada.transform.position, Vector3.up).normalized;
             Vector3 desplazamientoLocal = anclaInstanciada.transform.InverseTransformDirection(haciaCamara * acercarHaciaCamara);
             modelo.transform.localPosition += desplazamientoLocal;
+        }
+
+        // Asegurar gestor interactivo de los Peces del Biobío (Estación 4)
+        if (modelo.name.Contains("Biobio") && modelo.GetComponent<GestorPuntosPecesBiobioAR>() == null)
+        {
+            modelo.AddComponent<GestorPuntosPecesBiobioAR>();
         }
 
         modelo.SetActive(true);
@@ -535,18 +693,36 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
     }
 
     // ── Encuestas ──────────────────────────────────────────────────────
+    public class FilaEncuesta
+    {
+        public int id_encuesta { get; set; }
+        public string id_sesion { get; set; }
+        public string origen { get; set; }
+        public string rango_edad { get; set; }
+        public int calificacion { get; set; }
+        public string comentarios { get; set; }
+        public string fecha_respuesta { get; set; }
+        public int sincronizacion_encuesta { get; set; }
+    }
+
     public bool GuardarEncuesta(string idSesion, string origen, string rangoEdad, int calificacion, string comentarios)
     {
         try
         {
             using (var db = new SQLiteConnection(rutaDB))
             {
+                // Asegurar integridad referencial con SESION_ANONIMA
+                db.Execute(@"INSERT OR IGNORE INTO SESION_ANONIMA 
+                    (id_sesion, fecha_inicio, sincronizacion) 
+                    VALUES (?, datetime('now'), 0)", 
+                    idSesion);
+
                 db.Execute(@"INSERT INTO ENCUESTA_VISITANTE 
                     (id_sesion, origen, rango_edad, calificacion, comentarios, fecha_respuesta, sincronizacion_encuesta)
                     VALUES (?, ?, ?, ?, ?, date('now'), 0)",
                     idSesion, origen, rangoEdad, calificacion, comentarios ?? "");
             }
-            Debug.Log("[DIAG] Encuesta guardada en SQLite.");
+            Debug.Log("[DIAG] Encuesta guardada en SQLite exitosamente.");
             return true;
         }
         catch (System.Exception e)
@@ -555,4 +731,40 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
             return false;
         }
     }
+
+    public List<FilaEncuesta> ObtenerEncuestasGuardadas()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(rutaDB)) rutaDB = Path.Combine(Application.persistentDataPath, "registro_interacciones.db");
+            using (var db = new SQLiteConnection(rutaDB))
+            {
+                return db.Query<FilaEncuesta>("SELECT * FROM ENCUESTA_VISITANTE");
+            }
+        }
+        catch (System.Exception e)
+        {
+            LogDiag("ObtenerEncuestasGuardadas", e);
+            return new List<FilaEncuesta>();
+        }
+    }
+
+#if UNITY_EDITOR
+    [UnityEditor.MenuItem("Colbún/Ver Encuestas Guardadas en SQLite")]
+    public static void MenuVerEncuestas()
+    {
+        var gestor = FindAnyObjectByType<GestionSQLite>();
+        if (gestor == null)
+        {
+            Debug.LogWarning(">> [Colbún] No se encontró GestionSQLite en la escena.");
+            return;
+        }
+        var lista = gestor.ObtenerEncuestasGuardadas();
+        Debug.Log($">> [Colbún] Total de encuestas guardadas en SQLite: {lista.Count}");
+        foreach (var enc in lista)
+        {
+            Debug.Log($"   [ID {enc.id_encuesta}] Sesión: {enc.id_sesion} | Origen: {enc.origen} | Edad: {enc.rango_edad} | Calificación: {enc.calificacion}/5 | Comentario: '{enc.comentarios}' | Fecha: {enc.fecha_respuesta}");
+        }
+    }
+#endif
 }

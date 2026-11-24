@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UIElements;
 
 [RequireComponent(typeof(UIDocument))]
@@ -16,6 +18,17 @@ public class EncuestaController : MonoBehaviour
         public string edad;
         public int nota;
         public string comentario;
+    }
+
+    [Serializable]
+    class PayloadServidor
+    {
+        public string id_sesion;
+        public string origen;
+        public string edad;
+        public int nota;
+        public string comentario;
+        public string fecha;
     }
 
     readonly string[] origenes = { "Santa Bárbara", "Quilaco", "Los Ángeles", "Otra comuna del Biobío", "Otra región de Chile", "Otro país" };
@@ -130,6 +143,9 @@ public class EncuestaController : MonoBehaviour
         PlayerPrefs.SetInt("encuesta_enviada", 1);
         PlayerPrefs.Save();
 
+        // 4. Intentar enviar en segundo plano a la laptop si está conectado al Hotspot (Offline LAN)
+        StartCoroutine(EnviarAlServidorDashboard(idSesion, origen, edad, nota, comentariosTexto));
+
         mensaje.text = "¡Gracias por responder! Tu opinión ha sido guardada en la base de datos.";
         if (btnEnviar != null)
         {
@@ -138,6 +154,91 @@ public class EncuestaController : MonoBehaviour
         }
         Limpiar();
     }
+
+    IEnumerator EnviarAlServidorDashboard(string idSesion, string origen, string edad, int nota, string comentarios)
+    {
+#if UNITY_EDITOR
+        string ipServidor = "127.0.0.1";
+#else
+        string ipServidor = PlayerPrefs.GetString("ip_servidor_dashboard", "192.168.137.1");
+#endif
+        string url = $"http://{ipServidor}:8000/api/encuesta";
+
+        var payload = new PayloadServidor
+        {
+            id_sesion = idSesion ?? "sesion_android",
+            origen = string.IsNullOrEmpty(origen) ? "Santa Bárbara" : origen,
+            edad = string.IsNullOrEmpty(edad) ? "18 a 29" : edad,
+            nota = nota,
+            comentario = comentarios ?? "",
+            fecha = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+        };
+
+        string json = JsonUtility.ToJson(payload);
+        using (var req = new UnityWebRequest(url, "POST"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
+            req.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            req.timeout = 3; // Timeout corto (3 seg) para no gastar batería si no hay señal
+            yield return req.SendWebRequest();
+
+            if (req.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("[ENCUESTA] ¡Enviada exitosamente al Dashboard de la laptop!");
+            }
+            else
+            {
+                Debug.Log("[ENCUESTA] Servidor de laptop no alcanzable (" + req.error + "). Queda seguro en SQLite local.");
+            }
+        }
+    }
+
+#if UNITY_EDITOR
+    [UnityEditor.MenuItem("Colbún/Habilitar Conexiones Locales HTTP")]
+    public static void HabilitarHTTP()
+    {
+        UnityEditor.PlayerSettings.insecureHttpOption = UnityEditor.InsecureHttpOption.AlwaysAllowed;
+        Debug.Log(">> [Colbún] Conexiones locales HTTP habilitadas (AlwaysAllowed).");
+    }
+
+    [UnityEditor.MenuItem("Colbún/Probar Envío de Encuesta a Streamlit")]
+    public static void ProbarEnvioEditor()
+    {
+        UnityEditor.PlayerSettings.insecureHttpOption = UnityEditor.InsecureHttpOption.AlwaysAllowed;
+        Debug.Log(">> [Colbún] Enviando encuesta de prueba a Streamlit (127.0.0.1:8000)...");
+
+        var payload = new PayloadServidor
+        {
+            id_sesion = "test_unity_" + System.DateTime.Now.Ticks,
+            origen = "Santa Bárbara",
+            edad = "18 a 29",
+            nota = 5,
+            comentario = "¡Prueba de conexión exitosa desde Unity a Streamlit!",
+            fecha = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+        };
+
+        string json = JsonUtility.ToJson(payload);
+        var req = new UnityWebRequest("http://127.0.0.1:8000/api/encuesta", "POST");
+        req.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(json));
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.SetRequestHeader("Content-Type", "application/json");
+        var op = req.SendWebRequest();
+        op.completed += _ =>
+        {
+            if (req.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log(">> [Colbún] ¡CONEXIÓN EXITOSA! Streamlit respondió: " + req.downloadHandler.text);
+            }
+            else
+            {
+                Debug.LogWarning(">> [Colbún] No se pudo conectar con Streamlit: " + req.error);
+            }
+            req.Dispose();
+        };
+    }
+#endif
 
     string ObtenerIdAnonimo()
     {

@@ -9,7 +9,7 @@
   <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
   <uses-feature android:name="android.hardware.touchscreen.multitouch" android:required="false" />
   <uses-feature android:name="android.hardware.touchscreen.multitouch.distinct" android:required="false" />
-  <application android:appCategory="game" android:enableOnBackInvokedCallback="false" android:extractNativeLibs="true">
+  <application android:appCategory="game" android:enableOnBackInvokedCallback="false" android:extractNativeLibs="true" android:usesCleartextTraffic="true">
     <meta-data android:name="com.google.ar.core" android:value="optional" />
     <meta-data android:name="unity.splash-mode" android:value="0" />
     <meta-data android:name="unity.splash-enable" android:value="True" />

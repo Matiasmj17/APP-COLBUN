@@ -382,6 +382,9 @@ Poseen esqueleto óseo y espina dorsal; respiran mediante branquias, nadan con a
                 // Fallback directo para Estación 5 si la base de datos en el móvil no tiene el registro
                 if (textoBuscado == "QR_ENERGIA_05")
                 {
+                    var mod5 = Resources.Load<GameObject>("Modelos3D/Estacion5/EnergiaAguaPrefab");
+                    if (mod5 != null) PrepararModeloParaPiso(mod5);
+
                     if (detalle != null)
                     {
                         detalle.Mostrar(
